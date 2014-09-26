@@ -1,0 +1,119 @@
+	<section>
+		<div class="container">
+			<div class="row">
+				<div class="col-sm-3">
+					<div class="left-sidebar">
+						
+						<div id="categoryController" ng-controller="categoryController"><!--brands_products-->
+						<div id="categoryblock" class="brands_products">
+							<h2>Category</h2>
+							<div id="categorylist" class="brands-name">
+								<ul class="nav nav-pills nav-stacked category">
+									<li><a href =""> <span class="pull-right">({{totalCategories}})</span><name>ALL</name></a></li>
+									<li id="{{category.id}}" ng-repeat="category in categories"><a href="" ng-click="getByCategory(category.id, 'categories', category.category)"> <span class="pull-right">({{category.count}})</span><name>{{category.category}}</name></a></li>
+								</ul>
+							</div>
+						</div>
+						
+						<div id="subcategoryblock" class="brands_products">
+							<h2>Sub-Category</h2>
+							<div id="subcategorylist" class="brands-name">
+								<ul class="nav nav-pills nav-stacked subcategory">
+<!-- 								<li> <a href =""><span class="pull-right">({{totalSubCategories}})</span><name>ALL</name></a></li>
+ -->									<li id="{{subcategory.subid}}" ng-repeat="subcategory in subcategories" my-repeat-directive-sub><a href="" ng-click="getBySubCategory(subcategory.subid, 'categories', subcategory.subcategory, subcategory.category, subcategory.categoryid)"> <span class="pull-right">({{subcategory.subcount}})</span><name>{{subcategory.subcategory}}</name></a></li>
+								
+								</ul>
+							</div>
+						</div>
+						</div>
+						
+						<div id="productController" ng-controller="productController" class="brands_products"><!--brands_products-->
+							<h2>Product Types</h2>
+							<div class="brands-name">
+								<ul class="nav nav-pills nav-stacked product">
+<!-- 									<li><a href =""> <span class="pull-right">({{totalTypes}})</span><name>ALL</name></a></li>
+ -->									<li id="{{type.id}}" ng-repeat="type in types" my-repeat-directive-product><a href ng-click="getByType(type.id, 'types', type.type)"> <span class="pull-right">({{type.count}})</span><name>{{type.type}}</name></a></li>
+ 
+								</ul>
+							</div>
+						</div><!--/brands_products-->
+					
+						<div id="brandController" ng-controller="brandController" class="brands_products"><!--brands_products-->
+							<h2>Brands</h2>
+							<div class="brands-name">
+								<ul class="nav nav-pills nav-stacked brand">
+<!-- 									<li><a href =""> <span class="pull-right">({{totalBrands}})</span>ALL</a></li>
+ -->									<li id="{{brand.id}}" ng-repeat="brand in brands" my-repeat-directive-brand><a href ng-click="getByBrand(brand.id,'filters.brand')"> <span class="pull-right">({{brand.count}})</span>{{brand.brand}}</a></li>
+								</ul>
+							</div>
+						</div><!--/brands_products-->
+						
+						<div id="featuredCtrl" ng-controller="featuredCtrl" class="brands_products"><!--brands_products-->
+							<h2>Featured Items</h2>
+							<div class="brands-name">
+								<ul class="nav nav-pills nav-stacked">
+									<li ng-repeat="featured in featuredI"><a href=""> <span class="pull-right">({{featured.count}})</span>{{featured.name}}</a></li>
+								</ul>
+							</div>
+						</div><!--/brands_products-->
+						
+						<div class="price-range"><!--price-range-->
+							<h2>Price Range</h2>
+							<div class="well">
+								 <input type="text" class="span2" value="" data-slider-min="0" data-slider-max="600" data-slider-step="5" data-slider-value="[250,450]" id="sl2" ><br />
+								 <b>$ 0</b> <b class="pull-right">$ 600</b>
+							</div>
+						</div><!--/price-range-->
+						
+						<div class="shipping text-center"><!--shipping-->
+							<img src="images/home/shipping.jpg" alt="" />
+						</div><!--/shipping-->
+						
+					</div>
+				</div>
+				
+				<div id="itemController" ng-controller="itemController" class="col-sm-9 padding-right">
+				<input type="hidden" id="totalPages" value="{{totalPages}}">
+					<div class="features_items"><!--features_items-->
+						<h2 class="title text-center">Items</h2>
+<div class="col-sm-3 pull-right">						
+  <select class="selectpicker" onchange="filter(this.value)">
+  	<option value="pricing.on_sale:desc">Discounted</option>
+    <option value="raw_title:asc">A-Z</option>
+    <option value="raw_title:desc">Z-A</option>
+    <option value="pricing.price:asc">Low Cost</option>
+  	<option value="pricing.price:desc">High Cost</option>
+   	<option value="details.is_new:desc">New</option>
+  	
+  </select>
+  </div>
+						<br><br>
+						<div class="col-sm-3" ng-repeat="item in items">
+							<div class="product-image-wrapper">
+								<div class="single-products">
+									<div id="{{item.sku}}" class="productinfo text-center">
+		     							<img  src="{{item.img}}" alt="" />
+		     							<div ng-class="{'newclr': item.isnew}" style="margin-right:150px; color:white"><b>NEW</b></div>
+		     							<h2 style="margin-top: 0px;"><b ng-class="{'redclr': item.onsale}">{{item.sellingprice}}</b>&nbsp;&nbsp;<strike>{{item.strikedoutprice}}</strike></h2>
+										<p>{{item.title}}</p>
+										<a href="#" class="btn btn-default add-to-cart"><i class="fa fa-shopping-cart"></i>Add to cart</a>
+									</div>
+
+								</div>
+<!-- 								<div class="choose">
+									<ul class="nav nav-pills nav-justified">
+										<li><a href=""><i class="fa fa-plus-square"></i>Add to wishlist</a></li>
+										<li><a href=""><i class="fa fa-plus-square"></i>Add to compare</a></li>
+									</ul>
+								</div> -->
+							</div>
+						</div>
+						
+						    <div id="page-selection"></div>
+						
+					</div><!--features_items-->
+				</div>
+			</div>
+		</div>
+	</section>
+	

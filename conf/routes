@@ -1,0 +1,35 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                           controllers.Application.index()
+GET     /shop                       controllers.Application.index()
+GET     /shop/items                 controllers.Application.getItems(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", page ?= "0", filter ?="", id ?="")
+GET     /shop/brands                controllers.Application.getBrands(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", filter ?="", id ?="")
+GET     /shop/lookup                controllers.Application.lookup(searchText: String, sortBy ?= "pricing.on_sale", sortOrder ?= "desc")
+GET     /shop/categories            controllers.Application.getCategories(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", filter ?="", id ?="")
+GET     /shop/producttypes          controllers.Application.getProductTypes(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", filter ?="", id ?="")
+GET     /shop/newOnSaleImported     controllers.Application.getOnSaleNewImported(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", filter ?="", id ?="")
+
+GET     /elasticTest                controllers.Application.elasticTest()
+
+
+
+
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
+
+
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+#GET     /search                     controllers.Search.search()
+# Map static resources from the /public folder to the /assets URL path
+#GET     /assets/*file               controllers.Assets.at(path="/public", file)
+#GET     /getArray/:query            controllers.Search.getResultArray(query: String)
+#GET     /getCategories               controllers.Search.getCategories()      
+#GET     /getSubCategories/:cat                  controllers.Search.getSubCategories(cat: String)
