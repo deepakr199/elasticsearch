@@ -47,15 +47,7 @@
 								</ul>
 							</div>
 						</div><!--/brands_products-->
-						
-						<div id="featuredCtrl" ng-controller="featuredCtrl" class="brands_products"><!--brands_products-->
-							<h2>Featured Items</h2>
-							<div class="brands-name">
-								<ul class="nav nav-pills nav-stacked">
-									<li ng-repeat="featured in featuredI"><a href=""> <span class="pull-right">({{featured.count}})</span>{{featured.name}}</a></li>
-								</ul>
-							</div>
-						</div><!--/brands_products-->
+
 						
 						<div class="price-range"><!--price-range-->
 							<h2>Price Range</h2>
@@ -76,14 +68,29 @@
 				<input type="hidden" id="totalPages" value="{{totalPages}}">
 					<div class="features_items"><!--features_items-->
 						<h2 class="title text-center">Items</h2>
+						
+<div class="col-sm-6">
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" value="pricing.on_sale" > On Sale ({{featuredI[2].count}})
+    </label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <label>
+      <input type="checkbox" value="details.is_new"> New ({{featuredI[0].count}})
+    </label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <label>
+      <input type="checkbox" value="details.is_imported"> Imported ({{featuredI[1].count}})
+    </label>
+  </div>
+</div>						
 <div class="col-sm-3 pull-right">						
   <select class="selectpicker" onchange="filter(this.value)">
-  	<option value="pricing.on_sale:desc">Discounted</option>
+  	<!-- <option value="pricing.on_sale:desc">Discounted</option> -->
+  	<option value="inventory.stock_status:desc">Relevance</option>
     <option value="raw_title:asc">A-Z</option>
     <option value="raw_title:desc">Z-A</option>
     <option value="pricing.price:asc">Low Cost</option>
   	<option value="pricing.price:desc">High Cost</option>
-   	<option value="details.is_new:desc">New</option>
+   	<!-- <option value="details.is_new:desc">New</option> -->
   	
   </select>
   </div>

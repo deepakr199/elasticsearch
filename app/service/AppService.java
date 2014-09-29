@@ -103,7 +103,17 @@ public class AppService {
 			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"match\": { \""+filter+"\":  \""+id+"\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
 		}
 		
-		String query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], \"from\": "+page+",\"size\":12}";
+		String query = null;
+		if(sortBy.equals("pricing.price")){
+			query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\"_script\":{\"lang\":\"groovy\",\"script\" : \"doc['pricing.promo_price'].value == 0 ? "
+					+ "doc['pricing.price'].value : doc['pricing.promo_price'].value\",\"type\" : \"number\",\"order\" : \""+sortOrder+"\"}}], \"from\": "+page+",\"size\":12}";
+		}else if(sortBy.equals("raw_title")){
+			query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\"_script\":{\"lang\":\"groovy\",\"script\" : \"doc['raw_title'].value.toLowerCase()\","
+					+ "\"type\" : \"string\",\"order\" : \""+sortOrder+"\"}}], \"from\": "+page+",\"size\":12}";
+		}else{
+			query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], \"from\": "+page+",\"size\":12}";
+		}
+		
 		System.out.println("Items - "+query);
 		try {
 			request = new HttpPost("http://localhost:9200/testmulti/_search");
@@ -200,8 +210,14 @@ public class AppService {
 				jsonObject.put("name", "New");
 				jsonObject.put("count", count);
 				aggrArray.put(jsonObject);
+				}else{
+					if(!isNew && isNewNode.size() == 1){
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put("name", "New");
+						jsonObject.put("count", count);
+						aggrArray.put(jsonObject);
+					}
 				}
-
 			}
 		}
 		
@@ -215,6 +231,13 @@ public class AppService {
 				jsonObject.put("name", "Imported");
 				jsonObject.put("count", count);
 				aggrArray.put(jsonObject);
+				}else{
+					if(!isImported.equals("T") && isImportedNode.size() == 1){
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put("name", "Imported");
+						jsonObject.put("count", count);
+						aggrArray.put(jsonObject);
+					}
 				}
 			}
 		}
@@ -229,6 +252,13 @@ public class AppService {
 				jsonObject.put("name", "On Sale");
 				jsonObject.put("count", count);
 				aggrArray.put(jsonObject);
+				}else{
+					if(!onSale && OnSaleNode.size() == 1){
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put("name", "On Sale");
+						jsonObject.put("count", count);
+						aggrArray.put(jsonObject);
+					}
 				}
 			}
 		}
@@ -285,7 +315,7 @@ public class AppService {
 		String query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], "
 				+ "\"aggs\": {\"category\": {\"terms\": {\"field\": \"categories\",\"size\" : 100}}}}";
 		
-		System.out.println("Category - "+query);
+		System.out.println("Category **-** "+query);
 		try {
 			request = new HttpPost("http://localhost:9200/testmulti/_search?search_type=count");
 			StringEntity params =new StringEntity(query);

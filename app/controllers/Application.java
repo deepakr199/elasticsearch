@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 public class Application extends Controller {
 
 	public static Result index() throws JSONException {
-		AppService.getLookup("s");
+	//	AppService.getLookup("s");
 		return ok(views.html.main.render());
 	}
 

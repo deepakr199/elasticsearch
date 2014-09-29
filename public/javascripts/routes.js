@@ -24,7 +24,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 	             }).error(function(data, status, headers, config) {
 	             });
 					
-					angular.element('#featuredCtrl').scope().getFeatured(searchText,"","");
+					angular.element('#itemController').scope().getFeatured(searchText,"","");
 					angular.element('#brandController').scope().getBrands(searchText,"","");
 					angular.element('#categoryController').scope().getCategories(searchText,"","");
 					angular.element('#productController').scope().getProductTypes(searchText,"","");
@@ -45,7 +45,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
            		           });
 	             }).error(function(data, status, headers, config) {
 	             });
-					angular.element('#featuredCtrl').scope().getFeatured(searchText,filter,id);
+					angular.element('#itemController').scope().getFeatured(searchText,filter,id);
 					angular.element('#brandController').scope().getBrands(searchText,filter,id);
 					angular.element('#categoryController').scope().getCategories(searchText,filter,id);
 					angular.element('#productController').scope().getProductTypes(searchText,filter,id);
@@ -63,13 +63,22 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
            		            total: Math.ceil($scope.totalPages/12)});
 	             }).error(function(data, status, headers, config) {
 	             });
-					angular.element('#featuredCtrl').scope().getFeatured(searchText,filter,id);
+					angular.element('#itemController').scope().getFeatured(searchText,filter,id);
 					angular.element('#brandController').scope().getBrands(searchText,filter,id);
 					angular.element('#categoryController').scope().getCategories(searchText,filter,id);
 					angular.element('#productController').scope().getProductTypes(searchText,filter,id);
 
 				};
 				
+				$scope.getFeatured = function(searchText, filter, id) {	
+
+					 $http.get("/shop/newOnSaleImported?searchText="+searchText+"&filter="+filter+"&id="+id).
+	    	 	success(function(data, status, headers, config) {
+	    	 		$scope.featuredI = data;
+		             }).error(function(data, status, headers, config) {
+		             });
+					};
+					
 				$scope.itemPaginate = function(searchText, filter, id, sortBy, sortOrder, from){
 					from = (from-1)*12;
 					searchText = $('input#searchText').val();
@@ -113,7 +122,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 	             }).error(function(data, status, headers, config) {
 	             });
 				 
-					angular.element('#featuredCtrl').scope().getFeatured("","","");
+					angular.element('#itemController').scope().getFeatured("","","");
 					angular.element('#brandController').scope().getBrands("","","");
 					angular.element('#categoryController').scope().getCategories("","","");
 					angular.element('#productController').scope().getProductTypes("","","");
@@ -205,20 +214,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 				};
 				
 			}); 
- 
- shopApp.controller(
-			'featuredCtrl',
-			function($scope, $http, $location) {
-				$scope.getFeatured = function(searchText, filter, id) {	
 
-				 $http.get("/shop/newOnSaleImported?searchText="+searchText+"&filter="+filter+"&id="+id).
-    	 	success(function(data, status, headers, config) {
-    	 		$scope.featuredI = data;
-	             }).error(function(data, status, headers, config) {
-	             });
-				};
-				
-			}); 
  
  shopApp.controller(
 			'brandController',
