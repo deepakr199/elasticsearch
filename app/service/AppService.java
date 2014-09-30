@@ -68,7 +68,7 @@ public class AppService {
 		
 		String query = "{\"query\": {\"match_all\": {}},\"sort\": [{\"pricing.savings\": {\"order\": \"desc\"}}]}";
 		try {
-			request = new HttpPost("http://localhost:9200/testmulti/_search");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search");
 			StringEntity params =new StringEntity(query);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
@@ -116,7 +116,7 @@ public class AppService {
 		
 		System.out.println("Items - "+query);
 		try {
-			request = new HttpPost("http://localhost:9200/testmulti/_search");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search");
 			StringEntity params =new StringEntity(query);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
@@ -156,7 +156,7 @@ public class AppService {
 		String onSaleQuery = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], "
 				+ "\"aggs\": {\"onsale\": {\"terms\": {\"field\": \"pricing.on_sale\"}}}}";
 		try {
-			request = new HttpPost("http://localhost:9200/testmulti/_search?search_type=count");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
 			StringEntity params =new StringEntity(isNewQuery);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
@@ -165,7 +165,7 @@ public class AppService {
 			isNewResponseString = EntityUtils.toString(entity, "UTF-8");
 			
 			
-			request = new HttpPost("http://localhost:9200/testmulti/_search?search_type=count");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
 		    params =new StringEntity(isImportedQuery);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
@@ -174,7 +174,7 @@ public class AppService {
 		    isImportedResponseString = EntityUtils.toString(entity, "UTF-8");
 			
 		    
-			request = new HttpPost("http://localhost:9200/testmulti/_search?search_type=count");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
 		    params =new StringEntity(onSaleQuery);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
@@ -284,7 +284,7 @@ public class AppService {
 				+ "\"aggs\": {\"brands\": {\"terms\": {\"field\": \"filters.brand\",\"size\" : 1000}}}}";
 		System.out.println("Brands - "+query);
 		try {
-			request = new HttpPost("http://localhost:9200/testmulti/_search?search_type=count");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
 			StringEntity params =new StringEntity(query);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
@@ -317,7 +317,7 @@ public class AppService {
 		
 		System.out.println("Category **-** "+query);
 		try {
-			request = new HttpPost("http://localhost:9200/testmulti/_search?search_type=count");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
 			StringEntity params =new StringEntity(query);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
@@ -349,7 +349,7 @@ public class AppService {
 		String query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], "
 				+ "\"aggs\": {\"types\": {\"terms\": {\"field\": \"types\",\"size\" : 100}}}}";
 		try {
-			request = new HttpPost("http://localhost:9200/testmulti/_search?search_type=count");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
 			StringEntity params =new StringEntity(query);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
@@ -569,7 +569,7 @@ public class AppService {
 
 		System.out.println(query);
 		try {
-			request = new HttpPost("http://localhost:9200/testmulti/_search");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search");
 			StringEntity params =new StringEntity(query);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
@@ -766,7 +766,7 @@ public class AppService {
 		}	
 		System.out.println(query);
 		try {
-			request = new HttpPost("http://localhost:9200/testmulti/_search");
+			request = new HttpPost("http://localhost:9200/redcatindex/_search");
 			StringEntity params =new StringEntity(query);
 	        request.addHeader("content-type", "application/x-www-form-urlencoded");
 	        request.setEntity(params);
