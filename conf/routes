@@ -5,12 +5,12 @@
 # Home page
 GET     /                           controllers.Application.index()
 GET     /shop                       controllers.Application.index()
-GET     /shop/items                 controllers.Application.getItems(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", page ?= "0", filter ?="", id ?="")
-GET     /shop/brands                controllers.Application.getBrands(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", filter ?="", id ?="")
-GET     /shop/lookup                controllers.Application.lookup(searchText: String, sortBy ?= "pricing.on_sale", sortOrder ?= "desc")
-GET     /shop/categories            controllers.Application.getCategories(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", filter ?="", id ?="")
-GET     /shop/producttypes          controllers.Application.getProductTypes(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", filter ?="", id ?="")
-GET     /shop/newOnSaleImported     controllers.Application.getOnSaleNewImported(searchText ?= "", sortBy ?= "pricing.on_sale", sortOrder ?= "desc", filter ?="", id ?="")
+GET     /shop/items                 controllers.Application.getItems(searchText ?= "", sortBy ?= "inventory.stock_status", sortOrder ?= "desc", page ?= "0", categoryType ?="", filter ?="")
+GET     /shop/brands                controllers.Application.getBrands(searchText ?= "", sortBy ?= "inventory.stock_status", sortOrder ?= "desc", categoryType ?="", filter ?="")
+GET     /shop/lookup                controllers.Application.lookup(searchText: String, sortBy ?= "inventory.stock_status", sortOrder ?= "desc")
+GET     /shop/categories            controllers.Application.getCategories(searchText ?= "", sortBy ?= "inventory.stock_status", sortOrder ?= "desc", categoryType ?="", filter ?="")
+GET     /shop/producttypes          controllers.Application.getProductTypes(searchText ?= "", sortBy ?= "inventory.stock_status", sortOrder ?= "desc", categoryType ?="", filter ?="")
+GET     /shop/newOnSaleImported     controllers.Application.getOnSaleNewImported(searchText ?= "", sortBy ?= "inventory.stock_status", sortOrder ?= "desc", categoryType ?="", filter ?="")
 
 GET     /elasticTest                controllers.Application.elasticTest()
 

@@ -1,7 +1,6 @@
 package service;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -28,98 +27,58 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public class AppService {
 
-	public static String elasticTest() {
-		// on startup
-/*		Settings settings = ImmutableSettings.settingsBuilder().put("http.enabled", "false").put("transport.tcp.port", "9300-9400")
-				.put("discovery.zen.ping.multicast.enabled", "false").put("discovery.zen.ping.unicast.hosts", "localhost").build();
-		Node node = nodeBuilder().client(true).settings(settings).clusterName("elasticsearch").node();
-		Client client = node.client();*/
-
-		/*
-		 * Settings settings = ImmutableSettings.settingsBuilder().put("cluster.name", "elasticsearch_deepakr").build();
-		 * TransportClient transportClient = new TransportClient(settings); Client client =
-		 * transportClient.addTransportAddress(new InetSocketTransportAddress("localhost", 9300));
-		 */
-/*		String query = "{\"query\": {\"match_all\": {}},\"sort\": [{\"pricing.savings\": {\"order\": \"desc\"}}]}";
-		
-		QueryBuilder queryBuilder = QueryBuilders.queryString(query);
-		SearchResponse response = client.prepareSearch("catalogidx").setTypes("page").setSearchType(SearchType.QUERY_AND_FETCH)
-				.setQuery(queryBuilder)
-				.setFrom(0).setSize(10).setExplain(true).execute().actionGet();
-		System.out.println("4");
-		SearchHit[] results = response.getHits().getHits();
-
-		System.out.println("Current results: " + results.length);
-		for (SearchHit hit : results) {
-			System.out.println("------------------------------");
-			Map<String, Object> result = hit.getSource();
-			System.out.println(result);
-		}
-
-		// on shutdown
-
-		client.close();
-		return "works";*/
-		
-		
-		@SuppressWarnings("resource")
-		HttpClient client = new DefaultHttpClient();
-		HttpPost request = null;
-		
-		String query = "{\"query\": {\"match_all\": {}},\"sort\": [{\"pricing.savings\": {\"order\": \"desc\"}}]}";
-		try {
-			request = new HttpPost("http://localhost:9200/redcatindex/_search");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
-		} catch (UnsupportedEncodingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		HttpResponse response = null;
-		String responseString = null;
-		try {
-			response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			responseString = EntityUtils.toString(entity, "UTF-8");
-		} catch (ParseException | IOException e) {
-			Logger.error("IOException/ParseException - " + e.getMessage());
-			e.printStackTrace();
-		}
-		return responseString;
-	}
-
-
-	public static String getItems(String searchText, String sortBy, String sortOrder, String page, String filter, String id) {
+	public static String getItems(String searchText, String sortBy, String sortOrder, String page, String categoryType, String filter) {
 
 		@SuppressWarnings("resource")
 		HttpClient client = new DefaultHttpClient();
 		HttpPost request = null;
 		HttpResponse response = null;
 		String responseString = null;
-		if(StringUtils.isBlank(filter) || StringUtils.equals(filter, "undefined")){
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
-		}else{
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"match\": { \""+filter+"\":  \""+id+"\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
+		String queryText = "";
+		String filterText = "";
+		String[] facets = categoryType.split("::");
+		String[] filters = filter.split(":");
+		
+		if(StringUtils.isNotBlank(searchText)){
+			queryText = ",\"must\": {\"multi_match\" : {\"query\": \""+searchText+"\",\"fields\": [\"title\",\"categories.category_name\",\"types.product_type\"]}}";
+		}
+		for(int i = 0; i < facets.length; i++){
+			if (StringUtils.isNotBlank(facets[i])) {
+				String[] eachFacet = facets[i].split(":");
+				queryText = queryText + ",\"must\":{ \"match\": { \"" + eachFacet[0] + "\":  \"" + eachFacet[1] + "\" }}";
+			}
 		}
 		
+		for(int i = 0; i < filters.length; i++){
+			if (StringUtils.isNotBlank(filters[i])) {
+				filterText = filterText + ",\"" + filters[i] + "\"";
+			}
+		}
+		if(StringUtils.isNotBlank(filter)){
+			queryText = queryText + ",\"must\": {\"multi_match\" : {\"query\": \"1\",\"fields\": ["+filterText.replaceFirst(",","")+"]}}";
+		}
+
 		String query = null;
-		if(sortBy.equals("pricing.price")){
-			query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\"_script\":{\"lang\":\"groovy\",\"script\" : \"doc['pricing.promo_price'].value == 0 ? "
-					+ "doc['pricing.price'].value : doc['pricing.promo_price'].value\",\"type\" : \"number\",\"order\" : \""+sortOrder+"\"}}], \"from\": "+page+",\"size\":12}";
-		}else if(sortBy.equals("raw_title")){
-			query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\"_script\":{\"lang\":\"groovy\",\"script\" : \"doc['raw_title'].value.toLowerCase()\","
-					+ "\"type\" : \"string\",\"order\" : \""+sortOrder+"\"}}], \"from\": "+page+",\"size\":12}";
-		}else{
-			query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], \"from\": "+page+",\"size\":12}";
+		if (sortBy.equals("pricing.price")) {
+			query = "{\"query\": {\"bool\": {\"must\": {\"match\": {\"details.status\": \"1\"  }}" + queryText
+					+ "}},\"sort\": [{\"_script\":{\"lang\":\"groovy\",\"script\" : \"doc['pricing.promo_price'].value == 0 ? "
+					+ "doc['pricing.price'].value : doc['pricing.promo_price'].value\",\"type\" : \"number\",\"order\" : \"" + sortOrder
+					+ "\"}},\"_score\"], \"from\": " + page + ",\"size\":12}";
+		} else if (sortBy.equals("raw_title")) {
+			query = "{\"query\": {\"bool\": {\"must\": {\"match\": {\"details.status\": \"1\"  }}" + queryText
+					+ "}},\"sort\": [{\"_script\":{\"lang\":\"groovy\",\"script\" : \"doc['raw_title'].value.toLowerCase()\","
+					+ "\"type\" : \"string\",\"order\" : \"" + sortOrder + "\"}},\"_score\"], \"from\": " + page + ",\"size\":12}";
+		} else {
+			query = "{\"query\": {\"bool\": {\"must\": {\"match\": {\"details.status\": \"1\"  }}" + queryText+"}},\"sort\": [{\"" + sortBy + "\": {\"order\": \"" + sortOrder
+					+ "\"}},\"_score\"], \"from\": " + page + ",\"size\":12}";
 		}
-		
-		System.out.println("Items - "+query);
+
+		Logger.info("Items - " + query);
 		try {
-			request = new HttpPost("http://localhost:9200/redcatindex/_search");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search");
+			StringEntity params = new StringEntity(query);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
@@ -129,9 +88,9 @@ public class AppService {
 		}
 		return responseString;
 	}
-	
-	
-	public static JSONArray getOnSaleNewImported(String searchText, String sortBy, String sortOrder, String filter, String id) throws JSONException {
+
+	public static JSONArray getOnSaleNewImported(String searchText, String sortBy, String sortOrder, String categoryType, String filter)
+			throws JSONException {
 
 		@SuppressWarnings("resource")
 		HttpClient client = new DefaultHttpClient();
@@ -141,51 +100,71 @@ public class AppService {
 		String isImportedResponseString = null;
 		String onSaleResponseString = null;
 		JSONArray jsonArray = new JSONArray();
-		if(StringUtils.isBlank(filter) || StringUtils.equals(filter, "undefined")){
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
-		}else{
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"match\": { \""+filter+"\":  \""+id+"\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
+		
+		String queryText = "";
+		String filterText = "";
+		String[] facets = categoryType.split("::");
+		String[] filters = filter.split(":");
+		
+		if(StringUtils.isNotBlank(searchText)){
+			queryText = ",\"must\": {\"multi_match\" : {\"query\": \""+searchText+"\",\"fields\": [\"title\",\"categories.category_name\",\"types.product_type\"]}}";
+		}
+		for(int i = 0; i < facets.length; i++){
+			if (StringUtils.isNotBlank(facets[i])) {
+				String[] eachFacet = facets[i].split(":");
+				queryText = queryText + ",\"must\":{ \"match\": { \"" + eachFacet[0] + "\":  \"" + eachFacet[1] + "\" }}";
+			}
 		}
 		
-		String isNewQuery = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], "
-				+ "\"aggs\": {\"isnew\": {\"terms\": {\"field\": \"details.is_new\"}}}}";
+/*		for(int i = 0; i < filters.length; i++){
+			if (StringUtils.isNotBlank(filters[i])) {
+				filterText = filterText + ",\"" + filters[i] + "\"";
+			}
+		}
+		if(StringUtils.isNotBlank(filter)){
+			queryText = queryText + ",\"must\": {\"multi_match\" : {\"query\": \"1\",\"fields\": ["+filterText.replaceFirst(",","")+"]}}";
+		}*/
+
+		String isNewQuery = "{\"query\": {\"bool\": {\"must\": {\"match\": {\"details.status\": \"1\"  }}" + queryText+"}},\"sort\": [{\"" + sortBy + "\": {\"order\": \"" + sortOrder
+				+ "\"}}], " + "\"aggs\": {\"isnew\": {\"terms\": {\"field\": \"details.is_new\"}}}}";
+
+		String isImportedQuery = "{\"query\": {\"bool\": {\"must\": {\"match\": {\"details.status\": \"1\"  }}" + queryText+"}},\"sort\": [{\"" + sortBy + "\": {\"order\": \"" + sortOrder
+				+ "\"}}], " + "\"aggs\": {\"imported\": {\"terms\": {\"field\": \"details.is_imported\"}}}}";
+
+		String onSaleQuery = "{\"query\": {\"bool\": {\"must\": {\"match\": {\"details.status\": \"1\"  }}" + queryText+"}},\"sort\": [{\"" + sortBy + "\": {\"order\": \"" + sortOrder
+				+ "\"}}], " + "\"aggs\": {\"onsale\": {\"terms\": {\"field\": \"pricing.on_sale\"}}}}";
 		
-		String isImportedQuery = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], "
-				+ "\"aggs\": {\"imported\": {\"terms\": {\"field\": \"details.is_imported\"}}}}";
+		Logger.info("new query "+isNewQuery);
+		Logger.info("imported query "+isImportedQuery);
+		Logger.info("on sale query "+onSaleQuery);
 		
-		String onSaleQuery = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], "
-				+ "\"aggs\": {\"onsale\": {\"terms\": {\"field\": \"pricing.on_sale\"}}}}";
 		try {
-			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
-			StringEntity params =new StringEntity(isNewQuery);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search?search_type=count");
+			StringEntity params = new StringEntity(isNewQuery);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			isNewResponseString = EntityUtils.toString(entity, "UTF-8");
-			
-			
-			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
-		    params =new StringEntity(isImportedQuery);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+
+			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search?search_type=count");
+			params = new StringEntity(isImportedQuery);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
-		    entity = response.getEntity();
-		    isImportedResponseString = EntityUtils.toString(entity, "UTF-8");
-			
-		    
-			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
-		    params =new StringEntity(onSaleQuery);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+			entity = response.getEntity();
+			isImportedResponseString = EntityUtils.toString(entity, "UTF-8");
+
+			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search?search_type=count");
+			params = new StringEntity(onSaleQuery);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
-		    entity = response.getEntity();
-		    onSaleResponseString = EntityUtils.toString(entity, "UTF-8");
-		    
-		    
-		    jsonArray = getCounts(isNewResponseString, isImportedResponseString, onSaleResponseString);	
-		    
-		    
+			entity = response.getEntity();
+			onSaleResponseString = EntityUtils.toString(entity, "UTF-8");
+
+			jsonArray = getCounts(isNewResponseString, isImportedResponseString, onSaleResponseString);
+
 		} catch (ParseException | IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
@@ -193,25 +172,27 @@ public class AppService {
 		return jsonArray;
 	}
 
-	private static JSONArray getCounts(String isNewResponseString, String isImportedResponseString, String onSaleResponseString) throws JSONException {
-		
-		JsonNode isNewNode = Json.parse(isNewResponseString).findPath("aggregations").findPath("isnew").findPath("buckets");;
-		JsonNode isImportedNode = Json.parse(isImportedResponseString).findPath("aggregations").findPath("imported").findPath("buckets");
-		JsonNode OnSaleNode = Json.parse(onSaleResponseString).findPath("aggregations").findPath("onsale").findPath("buckets");
+	private static JSONArray getCounts(String isNewResponseString, String isImportedResponseString, String onSaleResponseString)
+			throws JSONException {
+
+		JsonNode isNewNode = Json.parse(isNewResponseString).get("aggregations").get("isnew").get("buckets");
+		;
+		JsonNode isImportedNode = Json.parse(isImportedResponseString).get("aggregations").get("imported").get("buckets");
+		JsonNode OnSaleNode = Json.parse(onSaleResponseString).get("aggregations").get("onsale").get("buckets");
 
 		JSONArray aggrArray = new JSONArray();
-		if(isNewNode.isArray()){
-			for(JsonNode node : isNewNode){
+		if (isNewNode.isArray()) {
+			for (JsonNode node : isNewNode) {
 				String count = "0";
-				boolean isNew = node.findPath("key").asBoolean();
-				if(isNew){
-				count = node.findPath("doc_count").asText();
-				JSONObject jsonObject = new JSONObject();
-				jsonObject.put("name", "New");
-				jsonObject.put("count", count);
-				aggrArray.put(jsonObject);
-				}else{
-					if(!isNew && isNewNode.size() == 1){
+				boolean isNew = node.get("key").asBoolean();
+				if (isNew) {
+					count = node.get("doc_count").asText();
+					JSONObject jsonObject = new JSONObject();
+					jsonObject.put("name", "New");
+					jsonObject.put("count", count);
+					aggrArray.put(jsonObject);
+				} else {
+					if (!isNew && isNewNode.size() == 1) {
 						JSONObject jsonObject = new JSONObject();
 						jsonObject.put("name", "New");
 						jsonObject.put("count", count);
@@ -220,19 +201,19 @@ public class AppService {
 				}
 			}
 		}
-		
-		if(isImportedNode.isArray()){
-			for(JsonNode node : isImportedNode){
+
+		if (isImportedNode.isArray()) {
+			for (JsonNode node : isImportedNode) {
 				String count = "0";
-				String isImported = node.findPath("key").asText();
-				if(isImported.equals("T")){
-				count = node.findPath("doc_count").asText();
-				JSONObject jsonObject = new JSONObject();
-				jsonObject.put("name", "Imported");
-				jsonObject.put("count", count);
-				aggrArray.put(jsonObject);
-				}else{
-					if(!isImported.equals("T") && isImportedNode.size() == 1){
+				String isImported = node.get("key").asText();
+				if (isImported.equals("T")) {
+					count = node.get("doc_count").asText();
+					JSONObject jsonObject = new JSONObject();
+					jsonObject.put("name", "Imported");
+					jsonObject.put("count", count);
+					aggrArray.put(jsonObject);
+				} else {
+					if (!isImported.equals("T") && isImportedNode.size() == 1) {
 						JSONObject jsonObject = new JSONObject();
 						jsonObject.put("name", "Imported");
 						jsonObject.put("count", count);
@@ -241,19 +222,19 @@ public class AppService {
 				}
 			}
 		}
-		
-		if(OnSaleNode.isArray()){
-			for(JsonNode node : OnSaleNode){
+
+		if (OnSaleNode.isArray()) {
+			for (JsonNode node : OnSaleNode) {
 				String count = "0";
-				boolean onSale = node.findPath("key").asBoolean();
-				if(onSale){
-				count = node.findPath("doc_count").asText();
-				JSONObject jsonObject = new JSONObject();
-				jsonObject.put("name", "On Sale");
-				jsonObject.put("count", count);
-				aggrArray.put(jsonObject);
-				}else{
-					if(!onSale && OnSaleNode.size() == 1){
+				boolean onSale = node.get("key").asBoolean();
+				if (onSale) {
+					count = node.get("doc_count").asText();
+					JSONObject jsonObject = new JSONObject();
+					jsonObject.put("name", "On Sale");
+					jsonObject.put("count", count);
+					aggrArray.put(jsonObject);
+				} else {
+					if (!onSale && OnSaleNode.size() == 1) {
 						JSONObject jsonObject = new JSONObject();
 						jsonObject.put("name", "On Sale");
 						jsonObject.put("count", count);
@@ -262,11 +243,11 @@ public class AppService {
 				}
 			}
 		}
-		
+
 		return aggrArray;
 	}
 
-	public static String getBrands(String searchText, String sortBy, String sortOrder, String filter, String id) {
+	public static String getBrands(String searchText, String sortBy, String sortOrder, String categoryType, String filter) {
 
 		@SuppressWarnings("resource")
 		HttpClient client = new DefaultHttpClient();
@@ -274,20 +255,39 @@ public class AppService {
 		HttpResponse response = null;
 		String responseString = null;
 		
-		if(StringUtils.isBlank(filter) || StringUtils.equals(filter, "undefined")){
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
-		}else{
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"match\": { \""+filter+"\":  \""+id+"\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
+		String queryText = "";
+		String filterText = "";
+		String[] facets = categoryType.split("::");
+		String[] filters = filter.split(":");
+		
+		if(StringUtils.isNotBlank(searchText)){
+			queryText = ",\"must\": {\"multi_match\" : {\"query\": \""+searchText+"\",\"fields\": [\"title\",\"categories.category_name\",\"types.product_type\"]}}";
+		}
+		for(int i = 0; i < facets.length; i++){
+			if (StringUtils.isNotBlank(facets[i])) {
+				String[] eachFacet = facets[i].split(":");
+				queryText = queryText + ",\"must\":{ \"match\": { \"" + eachFacet[0] + "\":  \"" + eachFacet[1] + "\" }}";
+			}
+		}
+
+		for(int i = 0; i < filters.length; i++){
+			if (StringUtils.isNotBlank(filters[i])) {
+				filterText = filterText + ",\"" + filters[i] + "\"";
+			}
+		}
+		if(StringUtils.isNotBlank(filter)){
+			queryText = queryText + ",\"must\": {\"multi_match\" : {\"query\": \"1\",\"fields\": ["+filterText.replaceFirst(",","")+"]}}";
 		}
 		
-		String query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], "
-				+ "\"aggs\": {\"brands\": {\"terms\": {\"field\": \"filters.brand\",\"size\" : 1000}}}}";
-		System.out.println("Brands - "+query);
+		String query = "{\"query\": {\"bool\": {\"must\": {\"match\": {\"details.status\": \"1\"  }}" + queryText+"}},\"sort\": [{\"" + sortBy + "\": {\"order\": \"" + sortOrder
+				+ "\"}}], " + "\"aggs\": {\"brands\": {\"terms\": {\"field\": \"filters.brand_name.raw_brand_name\",\"size\" : 1000}}}}";
+
+		Logger.info("Brands - " + query);
 		try {
-			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search?search_type=count");
+			StringEntity params = new StringEntity(query);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
@@ -297,8 +297,8 @@ public class AppService {
 		}
 		return responseString;
 	}
-	
-	public static String getCategories(String searchText, String sortBy, String sortOrder, String filter, String id) {
+
+	public static String getCategories(String searchText, String sortBy, String sortOrder, String categoryType, String filter) {
 
 		@SuppressWarnings("resource")
 		HttpClient client = new DefaultHttpClient();
@@ -306,21 +306,40 @@ public class AppService {
 		HttpResponse response = null;
 		String responseString = null;
 		
-		if(StringUtils.isBlank(filter) || StringUtils.equals(filter, "undefined")){
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
-		}else{
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"match\": { \""+filter+"\":  \""+id+"\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
+		String queryText = "";
+		String filterText = "";
+		String[] facets = categoryType.split("::");
+		String[] filters = filter.split(":");
+		
+		if(StringUtils.isNotBlank(searchText)){
+			queryText = ",\"must\": {\"multi_match\" : {\"query\": \""+searchText+"\",\"fields\": [\"title\",\"categories.category_name\",\"types.product_type\"]}}";
+		}
+		for(int i = 0; i < facets.length; i++){
+			if (StringUtils.isNotBlank(facets[i])) {
+				String[] eachFacet = facets[i].split(":");
+				queryText = queryText + ",\"must\":{ \"match\": { \"" + eachFacet[0] + "\":  \"" + eachFacet[1] + "\" }}";
+			}
+		}
+
+		for(int i = 0; i < filters.length; i++){
+			if (StringUtils.isNotBlank(filters[i])) {
+				filterText = filterText + ",\"" + filters[i] + "\"";
+			}
+		}
+		if(StringUtils.isNotBlank(filter)){
+			queryText = queryText + ",\"must\": {\"multi_match\" : {\"query\": \"1\",\"fields\": ["+filterText.replaceFirst(",","")+"]}}";
 		}
 		
-		String query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], "
-				+ "\"aggs\": {\"category\": {\"terms\": {\"field\": \"categories\",\"size\" : 100}}}}";
-		
-		System.out.println("Category **-** "+query);
+		String query = "{\"query\": {\"bool\": {\"must\": {\"match\": {\"details.status\": \"1\"  }}" + queryText+"}},\"sort\": [{\"" + sortBy + "\": {\"order\": \"" + sortOrder
+				+ "\"}}], " + "\"aggs\": {\"category\": {\"terms\": {\"field\": \"categories.category_name.raw_category_name\",\"size\" : 100}}}}";
+
+
+		Logger.info("Category "+query);
 		try {
-			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search?search_type=count");
+			StringEntity params = new StringEntity(query);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
@@ -330,78 +349,48 @@ public class AppService {
 		}
 		return responseString;
 	}
-	
-	
-	public static String getProductTypes(String searchText, String sortBy, String sortOrder, String filter, String id) {
+
+	public static String getProductTypes(String searchText, String sortBy, String sortOrder, String categoryType, String filter) {
 
 		@SuppressWarnings("resource")
 		HttpClient client = new DefaultHttpClient();
 		HttpPost request = null;
 		HttpResponse response = null;
 		String responseString = null;
-		
-		if(StringUtils.isBlank(filter) || StringUtils.equals(filter, "undefined")){
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
-		}else{
-			filter = "{ \"match\": { \"details.status\":  \"1\" }},{ \"match\": { \""+filter+"\":  \""+id+"\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}";
-		}
-		
-		String query = "{\"query\": {\"bool\": {\"must\":["+filter+"]}},\"sort\": [{\""+sortBy+"\": {\"order\": \""+sortOrder+"\"}}], "
-				+ "\"aggs\": {\"types\": {\"terms\": {\"field\": \"types\",\"size\" : 100}}}}";
-		try {
-			request = new HttpPost("http://localhost:9200/redcatindex/_search?search_type=count");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
-			response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			responseString = EntityUtils.toString(entity, "UTF-8");
-		} catch (ParseException | IOException e) {
-			Logger.error("IOException/ParseException - " + e.getMessage());
-			e.printStackTrace();
-		}
-		return responseString;
-	}
-	
-	public static String getBrand(String id) {
 
-		@SuppressWarnings("resource")
-		HttpClient client = new DefaultHttpClient();
-		HttpPost request = null;
-		HttpResponse response = null;
-		String responseString = null;
+		String queryText = "";
+		String filterText = "";
+		String[] facets = categoryType.split("::");
+		String[] filters = filter.split(":");
 		
-		String query = "{\"query\" : {\"term\" : { \"id\" : "+id+" }}}";
-		try {
-			request = new HttpPost("http://localhost:9200/brandidx/_search");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
-			response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			responseString = EntityUtils.toString(entity, "UTF-8");
-		} catch (ParseException | IOException e) {
-			Logger.error("IOException/ParseException - " + e.getMessage());
-			e.printStackTrace();
+		if(StringUtils.isNotBlank(searchText)){
+			queryText = ",\"must\": {\"multi_match\" : {\"query\": \""+searchText+"\",\"fields\": [\"title\",\"categories.category_name\",\"types.product_type\"]}}";
 		}
-		return responseString;
-	}
-	
-	
-	public static String getProductType(String id) {
+		for(int i = 0; i < facets.length; i++){
+			if (StringUtils.isNotBlank(facets[i])) {
+				String[] eachFacet = facets[i].split(":");
+				queryText = queryText + ",\"must\":{ \"match\": { \"" + eachFacet[0] + "\":  \"" + eachFacet[1] + "\" }}";
+			}
+		}
 
-		@SuppressWarnings("resource")
-		HttpClient client = new DefaultHttpClient();
-		HttpPost request = null;
-		HttpResponse response = null;
-		String responseString = null;
+		for(int i = 0; i < filters.length; i++){
+			if (StringUtils.isNotBlank(filters[i])) {
+				filterText = filterText + ",\"" + filters[i] + "\"";
+			}
+		}
+		if(StringUtils.isNotBlank(filter)){
+			queryText = queryText + ",\"must\": {\"multi_match\" : {\"query\": \"1\",\"fields\": ["+filterText.replaceFirst(",","")+"]}}";
+		}
 		
-		String query = "{\"query\" : {\"term\" : { \"id\" : "+id+" }}}";
+		String query = "{\"query\": {\"bool\": {\"must\": {\"match\": {\"details.status\": \"1\"  }}" + queryText+"}},\"sort\": [{\"" + sortBy + "\": {\"order\": \"" + sortOrder
+				+ "\"}}], " + "\"aggs\": {\"types\": {\"terms\": {\"field\": \"types.product_type.raw_product_type\",\"size\" : 200}}}}";
+
+		Logger.info("Product types "+query);
 		try {
-			request = new HttpPost("http://localhost:9200/typeidx/_search");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search?search_type=count");
+			StringEntity params = new StringEntity(query);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
@@ -419,18 +408,18 @@ public class AppService {
 		HttpResponse response = null;
 		String responseString = null;
 		String category = "";
-		String query = "{\"query\" : {\"term\" : { \"id\" : "+id+" }}}";
+		String query = "{\"query\" : {\"term\" : { \"title\" : " + id + " }}}";
 		try {
-			request = new HttpPost("http://localhost:9200/categoryindex/_search");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+			request = new HttpPost("http://localhost:9200/prodcategoryidx/_search");
+			StringEntity params = new StringEntity(query);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
-			
+
 			JsonNode categoryNode = Json.parse(responseString);
-		    category = categoryNode.findPath("hits").findPath("hits").findPath("_source").findPath("title").asText();
+			category = categoryNode.findPath("hits").findPath("hits").findPath("_source").findPath("title").asText();
 		} catch (ParseException | IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
@@ -439,74 +428,73 @@ public class AppService {
 	}
 
 	public static JSONObject getSubCategory(String id) throws JSONException {
-		
-	@SuppressWarnings("resource")
-	HttpClient client = new DefaultHttpClient();
-	HttpPost request = null;
-	HttpResponse response = null;
-	String responseString = null;
-	JSONObject jsonObject = new JSONObject();
-	
-	String query = "{\"query\" : {\"term\" : { \"sub_categories.id\" : "+id+" }}}";
-	try {
-		request = new HttpPost("http://localhost:9200/categoryindex/_search");
-		StringEntity params =new StringEntity(query);
-        request.addHeader("content-type", "application/x-www-form-urlencoded");
-        request.setEntity(params);
-		response = client.execute(request);
-		HttpEntity entity = response.getEntity();
-		responseString = EntityUtils.toString(entity, "UTF-8");
-		
-		JsonNode subCategoryNode = Json.parse(responseString);
-	    JsonNode categoryNode = subCategoryNode.findPath("hits").findPath("hits").findPath("_source").findPath("sub_categories");
-	    String category = subCategoryNode.findPath("hits").findPath("hits").findPath("_source").findPath("title").asText();
-	    String categoryid = subCategoryNode.findPath("hits").findPath("hits").findPath("_source").findPath("id").asText();
 
-		if(categoryNode.isArray()){
-			for(JsonNode key : categoryNode){
-				String title = key.findPath("title").asText();
-				String subid = key.findPath("id").asText();
-				if(id.equals(key.findPath("id").asText())){
-					jsonObject.put("subid", subid);
-					jsonObject.put("subcategory", title);
-					jsonObject.put("category", category);
-					jsonObject.put("categoryid", categoryid);
+		@SuppressWarnings("resource")
+		HttpClient client = new DefaultHttpClient();
+		HttpPost request = null;
+		HttpResponse response = null;
+		String responseString = null;
+		JSONObject jsonObject = new JSONObject();
 
+		String query = "{\"query\" : {\"term\" : { \"sub_categories.title\" : \"" + id + "\" }}}";
+		Logger.info(query);
+		try {
+			request = new HttpPost("http://localhost:9200/prodcategoryidx/_search");
+			StringEntity params = new StringEntity(query);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
+			response = client.execute(request);
+			HttpEntity entity = response.getEntity();
+			responseString = EntityUtils.toString(entity, "UTF-8");
+
+			JsonNode subCategoryNode = Json.parse(responseString);
+			JsonNode categoryNode = subCategoryNode.findPath("hits").findPath("hits").findPath("_source").findPath("sub_categories");
+			String category = subCategoryNode.findPath("hits").findPath("hits").findPath("_source").findPath("title").asText();
+			String categoryid = subCategoryNode.findPath("hits").findPath("hits").findPath("_source").findPath("id").asText();
+
+			if (categoryNode.isArray()) {
+				for (JsonNode key : categoryNode) {
+					String title = key.get("title").asText();
+					String subid = key.get("id").asText();
+					if (id.equals(key.get("id").asText())) {
+						jsonObject.put("subid", subid);
+						jsonObject.put("subcategory", title);
+						jsonObject.put("category", category);
+						jsonObject.put("categoryid", categoryid);
+
+					}
 				}
 			}
-		}
-	    
-	    
-	} catch (ParseException | IOException e) {
-		Logger.error("IOException/ParseException - " + e.getMessage());
-		e.printStackTrace();
-	}
-	return jsonObject;
-	}
 
+		} catch (ParseException | IOException e) {
+			Logger.error("IOException/ParseException - " + e.getMessage());
+			e.printStackTrace();
+		}
+		return jsonObject;
+	}
 
 	public static JSONArray getLookup(String searchText) throws JSONException {
-		
+
 		JSONArray jsonArray = new JSONArray();
 
 		List<String> keywords = getKeywords(searchText, false);
-		if(keywords.isEmpty()){
+		if (keywords.isEmpty()) {
 			keywords = getKeywords(searchText, true);
 			Integer count = 0;
-			for(String keyword: keywords){
+			for (String keyword : keywords) {
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("type", "keyword");
-				jsonObject.put("display", keyword+"???");
+				jsonObject.put("display", keyword + "???");
 				jsonObject.put("id", count.toString());
-				jsonObject.put("title", searchText + " "+ jsonObject);
+				jsonObject.put("title", searchText + " " + jsonObject);
 				jsonObject.put("searchText", keyword);
 				jsonObject.put("breadcrumb", "");
 				jsonArray.put(jsonObject);
 				count = count + 1;
 			}
-		}else{
+		} else {
 			Integer count = 0;
-			for(String keyword: keywords){
+			for (String keyword : keywords) {
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("type", "keyword");
 				jsonObject.put("display", keyword);
@@ -520,28 +508,30 @@ public class AppService {
 		}
 		JSONArray jsonArrayCat = getCategories(keywords);
 		JSONArray jsonArrayProd = getProducts(searchText);
-		
-		for(int i = 0; i < jsonArrayCat.length(); i++){
+		for (int i = 0; i < jsonArrayCat.length(); i++) {
 			JSONObject jsonObject = new JSONObject();
 			JSONObject object = jsonArrayCat.getJSONObject(i);
 			jsonObject.put("type", "categories");
-			jsonObject.put("display", object.get("keyword") + " in <b style=\"color:#694F4F\">" + object.get("category")+"</b>");
+			jsonObject.put("display", object.get("keyword") + " in <b style=\"color:#694F4F\">" + object.get("category") + "</b>");
 			jsonObject.put("id", object.get("categoryid"));
-			jsonObject.put("title", searchText + " in <b>" + object.get("category")+"</b> "+ object.get("keyword"));
+			jsonObject.put("title", searchText + " in <b>" + object.get("category") + "</b> " + object.get("keyword"));
 			jsonObject.put("searchText", object.get("keyword"));
 			jsonObject.put("breadcrumb", object.get("category"));
 			jsonArray.put(jsonObject);
 
 		}
-		
-		for(int i = 0; i < jsonArrayProd.length(); i++){
+
+		for (int i = 0; i < jsonArrayProd.length(); i++) {
 			JSONObject jsonObject = new JSONObject();
 			JSONObject object = jsonArrayProd.getJSONObject(i);
 			jsonObject.put("type", "product");
-			if(StringUtils.equalsIgnoreCase(object.get("onsale").toString(),"true")){
-				jsonObject.put("display", "<img src =\""+object.get("img")+ "\" height=40 />&nbsp;&nbsp; " +object.get("title")+ " <b style=\"color:#ee4054\">" +object.get("sellingprice")+ "</b> <strike>" + object.get("strikedoutprice")+"</strike>");
-			}else{
-				jsonObject.put("display", "<img src =\""+object.get("img")+ "\" height=40 />&nbsp;&nbsp; " +object.get("title")+ " " +object.get("sellingprice")+ " <strike>" + object.get("strikedoutprice")+"</strike>");
+			if (StringUtils.equalsIgnoreCase(object.get("onsale").toString(), "true")) {
+				jsonObject.put("display", "<img src =\"" + object.get("img") + "\" height=40 />&nbsp;&nbsp; " + object.get("title")
+						+ " <b style=\"color:#ee4054\">" + object.get("sellingprice") + "</b> <strike>" + object.get("strikedoutprice")
+						+ "</strike>");
+			} else {
+				jsonObject.put("display", "<img src =\"" + object.get("img") + "\" height=40 />&nbsp;&nbsp; " + object.get("title") + " "
+						+ object.get("sellingprice") + " <strike>" + object.get("strikedoutprice") + "</strike>");
 			}
 
 			jsonObject.put("id", object.get("sku"));
@@ -551,10 +541,9 @@ public class AppService {
 			jsonArray.put(jsonObject);
 
 		}
-		
+
 		return jsonArray;
 	}
-
 
 	private static JSONArray getProducts(String searchText) throws JSONException {
 
@@ -564,29 +553,29 @@ public class AppService {
 		HttpResponse response = null;
 		String responseString = null;
 		JSONArray jsonArray = new JSONArray();
-		
-		String query = "{\"query\": {\"bool\": {\"must\":[{ \"match\": {\"details.status\":  \"1\" }},{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"}}]}},\"sort\": [{\"pricing.on_sale\": {\"order\": \"desc\"}}], \"from\": 0,\"size\":3}";
 
-		System.out.println(query);
+		String query = "{\"query\": {\"bool\": {\"must\":[{ \"match\": {\"details.status\":  \"1\" }},{ \"prefix\": { \"title\": \""
+				+ searchText.toLowerCase() + "\"}}]}},\"sort\": [{\"pricing.on_sale\": {\"order\": \"desc\"}}], \"from\": 0,\"size\":3}";
+
 		try {
-			request = new HttpPost("http://localhost:9200/redcatindex/_search");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search");
+			StringEntity params = new StringEntity(query);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
-			
+
 			JsonNode jsonNode = Json.parse(responseString);
-			JsonNode node = jsonNode.findPath("hits").findPath("hits");
+			JsonNode node = jsonNode.get("hits").get("hits");
 			if (node.isArray()) {
 				for (JsonNode source : node) {
-					String sku = source.findPath("_source").findPath("sku").asText();
-					String title = source.findPath("_source").findPath("title").asText();
-					String img = source.findPath("_source").findPath("img").findPath("name").asText();
-					boolean onSale = source.findPath("_source").findPath("pricing").findPath("on_sale").asBoolean();
-					String price = "$" + source.findPath("_source").findPath("pricing").findPath("price").asText();
-					String promoPrice = "$" + source.findPath("_source").findPath("pricing").findPath("promo_price").asText();
+					String sku = source.get("_source").get("sku").asText();
+					String title = source.get("_source").get("title").asText();
+					String img = source.get("_source").get("img").get("name").asText();
+					boolean onSale = source.get("_source").get("pricing").get("on_sale").asBoolean();
+					String price = "$" + source.get("_source").get("pricing").get("price").asText();
+					String promoPrice = "$" + source.get("_source").get("pricing").get("promo_price").asText();
 					String strikedOutPrice = "";
 					if (onSale) {
 						strikedOutPrice = price;
@@ -613,187 +602,125 @@ public class AppService {
 			e.printStackTrace();
 		}
 		return jsonArray;
-			
+
 	}
-
-
-/*	private static JSONArray getSubCategories(String keyword) {
-		System.out.println("keyword - "+keyword);
-		@SuppressWarnings("resource")
-		HttpClient client = new DefaultHttpClient();
-		HttpPost request = null;
-		HttpResponse response = null;
-		String responseString = null;
-	    JSONArray jsonArray = new JSONArray();
-
-		String query = "{\"query\": {\"query_string\": {\"fields\": [\"sub_categories.types.name\"],\"query\": \""+keyword+"\" }}}";
-		System.out.println(query);
-		try {
-			request = new HttpPost("http://localhost:9200/categoryindex/_search");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
-			response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			responseString = EntityUtils.toString(entity, "UTF-8");
-			
-			JsonNode jsonNode = Json.parse(responseString);
-		    JsonNode keywordNode = jsonNode.findPath("hits").findPath("hits");
-		    System.out.println("keywordNode - "+keywordNode);
-			if (keywordNode.isArray()) {
-				for (JsonNode source : keywordNode) {
-					JsonNode subCategoryNode = source.findPath("_source").findPath("sub_categories");
-					System.out.println("subCategoryNode - "+subCategoryNode);
-					if (subCategoryNode.isArray()) {
-						for (JsonNode subCategory : subCategoryNode) {
-							System.out.println(subCategory.findPath("title"));
-						}
-					}
-
-				}
-			}
-		} catch (ParseException | IOException e) {
-			Logger.error("IOException/ParseException - " + e.getMessage());
-			e.printStackTrace();
-		}
-		return jsonArray;		
-		
-	}
-*/
 
 	private static JSONArray getCategories(List<String> keyword) throws JSONException {
-	    JSONArray jsonArray = new JSONArray();
+		JSONArray jsonArray = new JSONArray();
 		int count = 0;
-		for(String searchText: keyword){
-			
-		String responseString = getCategories(searchText, "pricing.on_sale", "desc", "", "");
-		JsonNode jsonNode = Json.parse(responseString);
+		for (String searchText : keyword) {
 
-		JsonNode aggrNode = jsonNode.findPath("aggregations").findPath("category").findPath("buckets");
-		
-		if(aggrNode.isArray()){
-			for(JsonNode key : aggrNode){
-				String category = AppService.getCategory(key.findPath("key").asText());
-				if(StringUtils.isNotBlank(category)){
-					JSONObject jsonObject = new JSONObject();
-					jsonObject.put("category", category);
-					jsonObject.put("categoryid", key.findPath("key").asText());
-					jsonObject.put("keyword", searchText);
-					jsonArray.put(jsonObject);			
-					count = count + 1;
-					if(count > 3){
-						return jsonArray;
-					}
-				}
-			}
-		}
-		}
-		
-		
-		return jsonArray;
-		
-	/*	@SuppressWarnings("resource")
-		HttpClient client = new DefaultHttpClient();
-		HttpPost request = null;
-		HttpResponse response = null;
-		String responseString = null;
-	    JSONArray jsonArray = new JSONArray();
-
-		String query = "{\"query\": {\"query_string\": {\"fields\": [\"types.name\"],\"query\": \""+keyword+"*\" }}}";
-		System.out.println("category "+query);
-		try {
-			request = new HttpPost("http://localhost:9200/categoryindex/_search");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
-			response = client.execute(request);
-			HttpEntity entity = response.getEntity();
-			responseString = EntityUtils.toString(entity, "UTF-8");
-			int count = 0;
+			String responseString = getCategories(searchText, "pricing.on_sale", "desc", "", "");
 			JsonNode jsonNode = Json.parse(responseString);
-		    JsonNode keywordNode = jsonNode.findPath("hits").findPath("hits");
-			if (keywordNode.isArray()) {
-				for (JsonNode source : keywordNode) {
-					String mainCategory = source.findPath("_source").findPath("title").toString();
-					String mainCategoryId = source.findPath("_source").findPath("id").toString();
-					String typeName = "";
-					JsonNode typeNode = source.findPath("_source").findPath("types");
-					if (typeNode.isArray()) {
-						for (JsonNode type : typeNode) {
-							System.out.println(type+"---"+type.findPath("name").asText()+"--"+keyword+"---"+type.findPath("name").asText().startsWith(keyword));
-							if(type.findPath("name").asText().toLowerCase().startsWith(keyword)){
-								 typeName = type.findPath("name").asText();
-									System.out.println("true "+typeName);
 
-							}
+			JsonNode aggrNode = jsonNode.get("aggregations").get("category").get("buckets");
+
+			if (aggrNode.isArray()) {
+				for (JsonNode key : aggrNode) {
+				//	String category = AppService.getCategory(key.get("key").asText());
+					if (StringUtils.isNotBlank(key.get("key").asText())) {
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put("category", key.get("key").asText());
+						jsonObject.put("categoryid", key.get("key").asText());
+						jsonObject.put("keyword", searchText);
+						jsonArray.put(jsonObject);
+						count = count + 1;
+						if (count > 3) {
+							return jsonArray;
 						}
-					}	
-					count = count + 1;
-					JSONObject jsonObject = new JSONObject();
-					jsonObject.put("category", mainCategory);
-					jsonObject.put("categoryid", mainCategoryId);
-					jsonObject.put("keyword", typeName);
-					jsonArray.put(jsonObject);
-					if(count == 3){
-						return jsonArray;
 					}
 				}
 			}
-		} catch (ParseException | IOException e) {
-			Logger.error("IOException/ParseException - " + e.getMessage());
-			e.printStackTrace();
 		}
-		return jsonArray;		*/
+
+		return jsonArray;
+
 	}
 
-
 	private static List<String> getKeywords(String searchText, boolean empty) {
-		
+
 		@SuppressWarnings("resource")
 		HttpClient client = new DefaultHttpClient();
 		HttpPost request = null;
 		HttpResponse response = null;
 		String responseString = null;
-		
+
 		List<String> keywords = new ArrayList<String>();
 		Set<String> temp = null;
-		
-		String query = "{\"fields\" : [\"title\"], \"query\": {\"query_string\": {\"fields\": [\"title\"], \"query\": \""+searchText+"*\"}},"+ 
-				"\"highlight\": {\"fields\": {\"title\": {}}}}";
-		
-		if(empty){
-			query = "{\"query\": {\"match\": {\"title\": {\"query\": \""+searchText+"\",\"fuzziness\": 1,\"prefix_length\": 1}}},\"highlight\":{\"fields\":{\"title\":{}}}}}";
-		}	
-		System.out.println(query);
+
+		String query = "{\"fields\" : [\"title\"], \"query\": {\"bool\": {\"must\":[{ \"match\": { \"details.status\":  \"1\" }},"+
+				"{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}]}}," + "\"highlight\": {\"fields\": {\"title\": {}}}}";
+
+		if (empty) {
+			query = "{\"query\": {\"match\": {\"title\": {\"query\": \"" + searchText
+					+ "\",\"fuzziness\": 1,\"prefix_length\": 1}}},\"highlight\":{\"fields\":{\"title\":{}}}}}";
+		}
+		Logger.info("KEYWORD "+query);
 		try {
-			request = new HttpPost("http://localhost:9200/redcatindex/_search");
-			StringEntity params =new StringEntity(query);
-	        request.addHeader("content-type", "application/x-www-form-urlencoded");
-	        request.setEntity(params);
+			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search");
+			StringEntity params = new StringEntity(query);
+			request.addHeader("content-type", "application/x-www-form-urlencoded");
+			request.setEntity(params);
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
-			
+
 			JsonNode jsonNode = Json.parse(responseString);
-		    JsonNode keywordNode = jsonNode.findPath("hits").findPath("hits");
-		    
+			JsonNode keywordNode = jsonNode.get("hits").get("hits");
+
 			if (keywordNode.isArray()) {
 				for (JsonNode source : keywordNode) {
-					String[] words = StringUtils.substringsBetween(source.findPath("highlight").findPath("title").toString(), "<em>", "</em>");
+					String[] words = StringUtils.substringsBetween(source.get("highlight").get("title").toString(), "<em>", "</em>");
 					keywords.addAll(Arrays.asList(words));
 				}
 			}
 			temp = new LinkedHashSet<String>(keywords);
 			keywords = new ArrayList<String>(temp);
+			keywords.remove("and");
+			keywords.remove("The");
 		} catch (ParseException | IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
-		if(keywords.size() > 5){
+		if (keywords.size() > 5) {
 			return keywords.subList(0, 5);
 		}
-		return keywords;		
+		return keywords;
+
+	}
+
+	public static List<String> getCategoryList() {
 		
+		List<String> categoryList = new ArrayList<String>(); 
+		
+		@SuppressWarnings("resource")
+		HttpClient client = new DefaultHttpClient();
+		HttpPost request = null;
+		HttpResponse response = null;
+		String responseString = null;
+		try{
+		String query = "{\"query\": {\"term\":{\"status\":1}}}";
+		request = new HttpPost("http://localhost:9200/prodcategoryidx/_search");
+		StringEntity params = new StringEntity(query);
+		request.addHeader("content-type", "application/x-www-form-urlencoded");
+		request.setEntity(params);
+		response = client.execute(request);
+		HttpEntity entity = response.getEntity();
+		responseString = EntityUtils.toString(entity, "UTF-8");
+		}catch (ParseException | IOException e) {
+			Logger.error("IOException/ParseException - " + e.getMessage());
+			e.printStackTrace();
+		}
+		JsonNode jsonNode = Json.parse(responseString);
+		JsonNode keywordNode = jsonNode.get("hits").get("hits");
+		
+		if (keywordNode.isArray()) {
+			for (JsonNode source : keywordNode) {
+				categoryList.add(source.get("_source").get("title").asText());
+			}
+		}
+		
+		return categoryList;
 	}
 
 }

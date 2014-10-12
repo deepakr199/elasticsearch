@@ -10,7 +10,7 @@
 							<div id="categorylist" class="brands-name">
 								<ul class="nav nav-pills nav-stacked category">
 									<li><a href =""> <span class="pull-right">({{totalCategories}})</span><name>ALL</name></a></li>
-									<li id="{{category.id}}" ng-repeat="category in categories"><a href="" ng-click="getByCategory(category.id, 'categories', category.category)"> <span class="pull-right">({{category.count}})</span><name>{{category.category}}</name></a></li>
+									<li id="{{category.id}}" ng-repeat="category in categories"><a href="" ng-click="getByCategory(category.id, 'categories.category_name.raw_category_name', category.category)"> <span class="pull-right">({{category.count}})</span><name>{{category.category}}</name></a></li>
 								</ul>
 							</div>
 						</div>
@@ -20,7 +20,7 @@
 							<div id="subcategorylist" class="brands-name">
 								<ul class="nav nav-pills nav-stacked subcategory">
 <!-- 								<li> <a href =""><span class="pull-right">({{totalSubCategories}})</span><name>ALL</name></a></li>
- -->									<li id="{{subcategory.subid}}" ng-repeat="subcategory in subcategories" my-repeat-directive-sub><a href="" ng-click="getBySubCategory(subcategory.subid, 'categories', subcategory.subcategory, subcategory.category, subcategory.categoryid)"> <span class="pull-right">({{subcategory.subcount}})</span><name>{{subcategory.subcategory}}</name></a></li>
+ -->									<li id="{{subcategory.subid}}" ng-repeat="subcategory in subcategories" my-repeat-directive-sub><a href="" ng-click="getBySubCategory(subcategory.subid, 'categories.category_name.raw_category_name', subcategory.subcategory)"> <span class="pull-right">({{subcategory.subcount}})</span><name>{{subcategory.subcategory}}</name></a></li>
 								
 								</ul>
 							</div>
@@ -32,7 +32,7 @@
 							<div class="brands-name">
 								<ul class="nav nav-pills nav-stacked product">
 <!-- 									<li><a href =""> <span class="pull-right">({{totalTypes}})</span><name>ALL</name></a></li>
- -->									<li id="{{type.id}}" ng-repeat="type in types" my-repeat-directive-product><a href ng-click="getByType(type.id, 'types', type.type)"> <span class="pull-right">({{type.count}})</span><name>{{type.type}}</name></a></li>
+ -->									<li id="{{type.id}}" ng-repeat="type in types" my-repeat-directive-product><a href ng-click="getByType(type.id, 'types.product_type.raw_product_type', type.type)"> <span class="pull-right">({{type.count}})</span><name>{{type.type}}</name></a></li>
  
 								</ul>
 							</div>
@@ -43,7 +43,7 @@
 							<div class="brands-name">
 								<ul class="nav nav-pills nav-stacked brand">
 <!-- 									<li><a href =""> <span class="pull-right">({{totalBrands}})</span>ALL</a></li>
- -->									<li id="{{brand.id}}" ng-repeat="brand in brands" my-repeat-directive-brand><a href ng-click="getByBrand(brand.id,'filters.brand')"> <span class="pull-right">({{brand.count}})</span>{{brand.brand}}</a></li>
+ -->									<li id="{{brand.id}}" ng-repeat="brand in brands" my-repeat-directive-brand><a href ng-click="getByBrand(brand.id,'filters.brand_name.raw_brand_name')"> <span class="pull-right">({{brand.count}})</span>{{brand.brand}}</a></li>
 								</ul>
 							</div>
 						</div><!--/brands_products-->
@@ -72,18 +72,18 @@
 <div class="col-sm-6">
   <div class="checkbox">
     <label>
-      <input type="checkbox" value="pricing.on_sale" > On Sale ({{featuredI[2].count}})
+      <input type="checkbox" name="filter" value="pricing.on_sale" onchange="filter()"> On Sale ({{featuredI[2].count}})
     </label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <label>
-      <input type="checkbox" value="details.is_new"> New ({{featuredI[0].count}})
+      <input type="checkbox" name="filter" value="details.is_new" onchange="filter()"> New ({{featuredI[0].count}})
     </label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <label>
-      <input type="checkbox" value="details.is_imported"> Imported ({{featuredI[1].count}})
+      <input type="checkbox" name="filter" value="details.is_imported" onchange="filter()"> Imported ({{featuredI[1].count}})
     </label>
   </div>
 </div>						
 <div class="col-sm-3 pull-right">						
-  <select class="selectpicker" onchange="filter(this.value)">
+  <select class="selectpicker" onchange="sorter(this.value)">
   	<!-- <option value="pricing.on_sale:desc">Discounted</option> -->
   	<option value="inventory.stock_status:desc">Relevance</option>
     <option value="raw_title:asc">A-Z</option>

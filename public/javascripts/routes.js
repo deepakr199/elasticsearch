@@ -8,18 +8,19 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 					$('#subcategoryblock').show();
 					$('#productController').show();
 					  
-					  $('ol.breadcrumb').html("<li><a href=\"\" onclick=\"breadcrumbcall('','')\" >Home</a></li>");
+					$('ol.breadcrumb').html("<li><a href=\"\" onclick=\"breadcrumbcall('','')\" >Home</a></li>");
 
-
-					$('#filter').val("");
+					$('#categoryType').val("");
 				    $('#id').val("");
+					$('#brandType').val("");
+				    $('#brandTypeId').val("");
 
 					$http.get("/shop/items?searchText="+searchText).
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
              	 		
-             	 		 $('#page-selection').bootpag({
+             	 		$('#page-selection').bootpag({
           		            total: Math.ceil($scope.totalPages/12)});
 	             }).error(function(data, status, headers, config) {
 	             });
@@ -31,12 +32,22 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 
 				};
 				
-				$scope.filter = function(filter) {
-					var queries = filter.split(":");
+				$scope.sorter = function(sorter) {
+					var filters = "";
+					$('input[name="filter"]:checked').each(function() {
+						   filters = filters + this.value + ":";
+					});
+					
+					var queries = sorter.split(":");
 					var searchText = $("#searchText").val();
-					var filter = $('#filter').val();
-					var id = $('#id').val();
-					$http.get("/shop/items?searchText="+searchText+"&sortBy="+queries[0]+"&sortOrder="+queries[1]+"&filter="+filter+"&id="+id).
+					var query = "";
+					if($('#id').val()){
+						query = query + $('#categoryType').val() + ":" + $('#id').val() + "::"; 
+					}
+					if($('#brandTypeId').val()){
+						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
+					}
+					$http.get("/shop/items?searchText="+searchText+"&sortBy="+queries[0]+"&sortOrder="+queries[1]+"&categoryType="+query+"&filter="+filters).
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
@@ -45,50 +56,113 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
            		           });
 	             }).error(function(data, status, headers, config) {
 	             });
-					angular.element('#itemController').scope().getFeatured(searchText,filter,id);
-					angular.element('#brandController').scope().getBrands(searchText,filter,id);
-					angular.element('#categoryController').scope().getCategories(searchText,filter,id);
-					angular.element('#productController').scope().getProductTypes(searchText,filter,id);
+					angular.element('#itemController').scope().getFeatured(searchText,categoryType,id);
+					angular.element('#brandController').scope().getBrands(searchText,categoryType,id);
+					angular.element('#categoryController').scope().getCategories(searchText,categoryType,id);
+					angular.element('#productController').scope().getProductTypes(searchText,categoryType,id);
 
 				};
 				
 				
-				$scope.itemFilter = function(searchText, filter, id) {
+				$scope.filter = function() {
+					var filters = "";
+					$('input[name="filter"]:checked').each(function() {
+						   filters = filters + this.value + ":";
+					});
+					
 					var queries = $('.selectpicker').val().split(":");
-					$http.get("/shop/items?searchText="+searchText+"&filter="+filter+"&id="+id+"&sortBy="+queries[0]+"&sortOrder="+queries[1]).
+					var searchText = $("#searchText").val();
+					var query = "";
+					if($('#id').val()){
+						query = query + $('#categoryType').val() + ":" + $('#id').val() + "::"; 
+					}
+					if($('#brandTypeId').val()){
+						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
+					}
+					$http.get("/shop/items?searchText="+searchText+"&sortBy="+queries[0]+"&sortOrder="+queries[1]+"&categoryType="+query+"&filter="+filters).
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
             	 		 $('#page-selection').bootpag({
-           		            total: Math.ceil($scope.totalPages/12)});
+           		            total: Math.ceil($scope.totalPages/12)
+           		           });
 	             }).error(function(data, status, headers, config) {
 	             });
-					angular.element('#itemController').scope().getFeatured(searchText,filter,id);
-					angular.element('#brandController').scope().getBrands(searchText,filter,id);
-					angular.element('#categoryController').scope().getCategories(searchText,filter,id);
-					angular.element('#productController').scope().getProductTypes(searchText,filter,id);
+					angular.element('#itemController').scope().getFeatured(searchText,categoryType,id);
+					angular.element('#brandController').scope().getBrands(searchText,categoryType,id);
+					angular.element('#categoryController').scope().getCategories(searchText,categoryType,id);
+					angular.element('#productController').scope().getProductTypes(searchText,categoryType,id);
 
 				};
 				
-				$scope.getFeatured = function(searchText, filter, id) {	
+				
+				$scope.itemFilter = function(searchText, categoryType, id) {
+					var filters = "";
+					$('input[name="filter"]:checked').each(function() {
+						   filters = filters + this.value + ":";
+					});
+					var queries = $('.selectpicker').val().split(":");
+					var query = "";
+					if($('#id').val()){
+						query = query + $('#categoryType').val() + ":" + $('#id').val() + "::"; 
+					}
+					if($('#brandTypeId').val()){
+						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
+					}
+					
+					$http.get("/shop/items?searchText="+searchText+"&categoryType="+query+"&filter="+filters+"&sortBy="+queries[0]+"&sortOrder="+queries[1]).
+             	 	success(function(data, status, headers, config) {
+             	 		$scope.items = data.items;
+             	 		$scope.totalPages = data.totalPages;
+            	 		$('#page-selection').bootpag({
+           		            total: Math.ceil($scope.totalPages/12)});
+	             }).error(function(data, status, headers, config) {
+	             });
+					angular.element('#itemController').scope().getFeatured(searchText,categoryType,id);
+					angular.element('#brandController').scope().getBrands(searchText,categoryType,id);
+					angular.element('#categoryController').scope().getCategories(searchText,categoryType,id);
+					angular.element('#productController').scope().getProductTypes(searchText,categoryType,id);
 
-					 $http.get("/shop/newOnSaleImported?searchText="+searchText+"&filter="+filter+"&id="+id).
+				};
+				
+				$scope.getFeatured = function(searchText, categoryType, id) {	
+					var filters = "";
+					$('input[name="filter"]:checked').each(function() {
+						   filters = filters + this.value + ":";
+					});
+					var query = "";
+					if($('#id').val()){
+						query = query + $('#categoryType').val() + ":" + $('#id').val() + "::"; 
+					}
+					if($('#brandTypeId').val()){
+						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
+					}
+					$http.get("/shop/newOnSaleImported?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
 	    	 	success(function(data, status, headers, config) {
 	    	 		$scope.featuredI = data;
 		             }).error(function(data, status, headers, config) {
 		             });
 					};
 					
-				$scope.itemPaginate = function(searchText, filter, id, sortBy, sortOrder, from){
+				$scope.itemPaginate = function(searchText, categoryType, id, sortBy, sortOrder, from){
 					from = (from-1)*12;
 					searchText = $('input#searchText').val();
 					var queries = $('.selectpicker').val().split(":");
 					sortBy= queries[0];
 					sortOrder = queries[1];
-					var filter = $('#filter').val();
-					var id = $('#id').val();
+					var filters = "";
+					$('input[name="filter"]:checked').each(function() {
+						   filters = filters + this.value + ":";
+					});
+					var query = "";
+					if($('#id').val()){
+						query = query + $('#categoryType').val() + ":" + $('#id').val() + "::"; 
+					}
+					if($('#brandTypeId').val()){
+						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
+					}
 
-					$http.get("/shop/items?searchText="+searchText+"&filter="+filter+"&id="+id+"&sortBy="+sortBy+"&sortOrder="+sortOrder+"&page="+from).
+					$http.get("/shop/items?searchText="+searchText+"&categoryType="+query+"&filter="+filters+"&sortBy="+sortBy+"&sortOrder="+sortOrder+"&page="+from).
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
@@ -98,7 +172,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 //           		            page:1
 //           		        }).on("page", function(event, /* page number here */ num){
 //        					var queries = $('.selectpicker').val().split(":");
-//           		        	console.log(filter+"--"+id+"--"+$('#searchText').val()+"--"+searchText);
+//           		        	console.log(categoryType+"--"+id+"--"+$('#searchText').val()+"--"+searchText);
 //           		        	 console.log(num);
 //           		        });
 	             }).error(function(data, status, headers, config) {
@@ -157,9 +231,19 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
  shopApp.controller(
 			'categoryController',
 			function($scope, $http, $location) {
-				$scope.getCategories = function(searchText,filter,id) {	
-
-				$http.get("/shop/categories?searchText="+searchText+"&filter="+filter+"&id="+id).
+				$scope.getCategories = function(searchText,categoryType,id) {
+				var filters = "";
+				$('input[name="filter"]:checked').each(function() {
+					   filters = filters + this.value + ":";
+				});
+				var query = "";
+				if($('#id').val()){
+					query = query + $('#categoryType').val() + ":" + $('#id').val() + "::"; 
+				}
+				if($('#brandTypeId').val()){
+					query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
+				}
+				$http.get("/shop/categories?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
        	 	success(function(data, status, headers, config) {
        	 		$scope.categories = data.mainObject[0];
        	 		$scope.subcategories = data.mainObject[1];
@@ -182,34 +266,36 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 				
 				};
 				
-				$scope.getByCategory = function(id, filter, category) {
-					var html = "<li>" + $('ol.breadcrumb li').slice(0).html() + "</li>";
-					var breadcrumb =  "<li><a href=\"javascript:breadcrumbcall('"+id+"','"+filter+"')\">"+category+"</a></li>";
+				$scope.getByCategory = function(id, categoryType, category) {
+					var html = "<li id='home'>" + $('ol.breadcrumb li').html() + "</li>";
+					var breadcrumb =  "<li id='category'><a href=\"javascript:breadcrumbcall('"+encodeURIComponent(id)+"','"+categoryType+"')\">"+category+"</a></li>";
 					$('ol.breadcrumb').html(html+breadcrumb);
 					
 					var searchText = $('#searchText').val();
-					$('#filter').val(filter);
+					$('#categoryType').val(categoryType);
 					$('#id').val(id);
 					$('#categoryblock').hide();
-					angular.element('#itemController').scope().itemFilter(searchText, filter, id);
+					angular.element('#itemController').scope().itemFilter(searchText, categoryType, id);
 					
 				};
 					
-				$scope.getBySubCategory = function(id, filter, subCategory, category, categoryid) {	
-					var categoryhtml = $('ol.breadcrumb li').slice(1).html();
+				$scope.getBySubCategory = function(id, categoryType, subCategory) {	
+					var categoryhtml = $('ol.breadcrumb li#category').html();
 					if (typeof categoryhtml === "undefined") {
-						categoryhtml = "<a href=\"javascript:breadcrumbcall('"+categoryid+"','categories')\">"+category+"</a>";
+						categoryhtml = "";
+					}else{
+						categoryhtml = "<li id='category'>"+categoryhtml+"</li>";
 					}
-					var html = "<li>" + $('ol.breadcrumb li').slice(0).html() + "</li>"+"<li>" + categoryhtml + "</li>";
-					var breadcrumb =  "<li><a href=\"javascript:breadcrumbcall('"+id+"','subcategories')\">"+subCategory+"</a></li>";
+					var html = "<li id='home'>" + $('ol.breadcrumb li#home').html() + "</li>" + categoryhtml;
+					var breadcrumb =  "<li id='subcategory'><a href=\"javascript:breadcrumbcall('"+encodeURIComponent(id)+"','subcategories')\">"+subCategory+"</a></li>";
 					$('ol.breadcrumb').html(html+breadcrumb);
 					
 					var searchText = $('#searchText').val();
-					$('#filter').val(filter);
+					$('#categoryType').val(categoryType);
 					$('#id').val(id);
 					$('#categoryblock').hide();
 					$('#subcategoryblock').hide();
-					angular.element('#itemController').scope().itemFilter(searchText, filter, id);
+					angular.element('#itemController').scope().itemFilter(searchText, categoryType, id);
 
 				};
 				
@@ -220,8 +306,19 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 			'brandController',
 			function($scope, $http, $location) {
 				 
-					$scope.getBrands = function(searchText,filter, id) {
-						$http.get("/shop/brands?searchText="+searchText+"&filter="+filter+"&id="+id).
+					$scope.getBrands = function(searchText,categoryType, id) {
+						var filters = "";
+						$('input[name="filter"]:checked').each(function() {
+							   filters = filters + this.value + ":";
+						});
+						var query = "";
+						if($('#id').val()){
+							query = query + $('#categoryType').val() + ":" + $('#id').val() + "::"; 
+						}
+						if($('#brandTypeId').val()){
+							query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
+						}
+						$http.get("/shop/brands?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
 	             	 	success(function(data, status, headers, config) {
 	             	 		$scope.brands = data.brands;
 	               	 		$scope.totalBrands = data.totalBrands;
@@ -239,11 +336,11 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 		             });
 					};
 					
-					$scope.getByBrand = function(id,filter) {	
+					$scope.getByBrand = function(id,brandType) {	
 						var searchText = $('#searchText').val();
-						$('#filter').val(filter);
-						$('#id').val(id);
-						angular.element('#itemController').scope().itemFilter(searchText, filter, id);
+						$('#brandTypeId').val(id);
+						$('#brandType').val(brandType);
+						angular.element('#itemController').scope().itemFilter(searchText, $('#categoryType').val(), $('#id').val());
 
 					};
 				
@@ -253,8 +350,19 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 			'productController',
 			function($scope, $http, $location) {
 				 
-					$scope.getProductTypes = function(searchText, filter, id) {
-						$http.get("/shop/producttypes?searchText="+searchText+"&filter="+filter+"&id="+id).
+					$scope.getProductTypes = function(searchText, categoryType, id) {
+						var filters = "";
+						$('input[name="filter"]:checked').each(function() {
+							   filters = filters + this.value + ":";
+						});
+						var query = "";
+						if($('#id').val()){
+							query = query + $('#categoryType').val() + ":" + $('#id').val() + "::"; 
+						}
+						if($('#brandTypeId').val()){
+							query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
+						}
+						$http.get("/shop/producttypes?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
 	             	 	success(function(data, status, headers, config) {
 	             	 		$scope.types = data.types;
 	               	 		$scope.totalTypes = data.totalTypes;
@@ -270,34 +378,34 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 		             }).error(function(data, status, headers, config) {
 		             });
 					};
-					$scope.getByType = function(id, filter, type) {	
+					$scope.getByType = function(id, categoryType, type) {	
 						
-						var categoryhtml = $('ol.breadcrumb li').slice(1).html();
+						var categoryhtml = $('ol.breadcrumb li#category').html();
 						if (typeof categoryhtml === "undefined") {
 							categoryhtml = "";
 						}else{
-							categoryhtml = "<li>" + categoryhtml + "</li>";
+							categoryhtml = "<li id='category'>" + categoryhtml + "</li>";
 						}
 						
-						var subcategoryhtml = $('ol.breadcrumb li').slice(2).html();
+						var subcategoryhtml = $('ol.breadcrumb li#subcategory').html();
 						if (typeof subcategoryhtml === "undefined") {
 							subcategoryhtml = "";
 						}else{
-							subcategoryhtml = "<li>" + subcategoryhtml + "</li>";
+							subcategoryhtml = "<li id='subcategory'>" + subcategoryhtml + "</li>";
 						}
 						
 						
-						var html = "<li>" + $('ol.breadcrumb li').slice(0).html() + "</li>" + categoryhtml + subcategoryhtml;
-						var breadcrumb =  "<li><a href=\"javascript:breadcrumbcall('"+id+"','"+filter+"')\" >"+type+"</a></li>";
+						var html = "<li id='home'>" + $('ol.breadcrumb li#home').html() + "</li>" + categoryhtml + subcategoryhtml;
+						var breadcrumb =  "<li id='product'><a href=\"javascript:breadcrumbcall('"+id+"','"+categoryType+"')\" >"+type+"</a></li>";
 						$('ol.breadcrumb').html(html+breadcrumb);
 						
 						var searchText = $('#searchText').val();
-						$('#filter').val(filter);
+						$('#categoryType').val(categoryType);
 						$('#id').val(id);
 						$('#categoryblock').hide();
 						$('#subcategoryblock').hide();
 						$('#productController').hide();
-						angular.element('#itemController').scope().itemFilter(searchText, filter, id);
+						angular.element('#itemController').scope().itemFilter(searchText, categoryType, id);
 
 					};
 				

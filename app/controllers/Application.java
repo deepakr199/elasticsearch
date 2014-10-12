@@ -1,6 +1,9 @@
 package controllers;
 
-import org.apache.commons.lang3.StringUtils;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.List;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,13 +18,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 public class Application extends Controller {
 
 	public static Result index() throws JSONException {
-	//	AppService.getLookup("s");
 		return ok(views.html.main.render());
 	}
 
-	public static Result getItems(String searchText, String sortBy, String sortOrder, String page, String filter, String id) throws JSONException {
+	public static Result getItems(String searchText, String sortBy, String sortOrder, String page, String categoryType, String filter) throws JSONException {
 
-		String jsonString = AppService.getItems(searchText, sortBy, sortOrder, page, filter, id);
+		String jsonString = AppService.getItems(searchText, sortBy, sortOrder, page, categoryType, filter);
 		JsonNode jsonNode = Json.parse(jsonString);
 
 		JsonNode node = jsonNode.findPath("hits").findPath("hits");
@@ -75,11 +77,11 @@ public class Application extends Controller {
 	}
 
 
-	public static Result getCategories(String searchText, String sortBy, String sortOrder, String filter, String id) throws JSONException {
+	public static Result getCategories(String searchText, String sortBy, String sortOrder, String categoryType, String filter) throws JSONException, UnsupportedEncodingException {
 
-		String jsonString = AppService.getCategories(searchText, sortBy, sortOrder, filter, id);
+		String jsonString = AppService.getCategories(searchText, sortBy, sortOrder, categoryType, filter);
 		JsonNode jsonNode = Json.parse(jsonString);
-
+		List<String> categoryList = AppService.getCategoryList(); 
 		JsonNode aggrNode = jsonNode.findPath("aggregations").findPath("category").findPath("buckets");
 		JSONArray aggrArray = new JSONArray();
 		JSONArray catArray = new JSONArray();
@@ -89,22 +91,21 @@ public class Application extends Controller {
 		
 		if(aggrNode.isArray()){
 			for(JsonNode key : aggrNode){
-				String category = AppService.getCategory(key.findPath("key").asText());
-				
-				if(StringUtils.isBlank(category)){
-					JSONObject subCategory = AppService.getSubCategory(key.findPath("key").asText());
-					if(subCategory.length() != 0){
+				if(!categoryList.contains(key.findPath("key").asText())){
+					//JSONObject subCategory = AppService.getSubCategory(key.findPath("key").asText());
 						Long count = key.findPath("doc_count").asLong();
-						subCategory.put("subcount", count);
-						subArray.put(subCategory);		
+						JSONObject jsonObject = new JSONObject();
+						jsonObject.put("subcategory", key.findPath("key").asText());
+						jsonObject.put("subid", URLEncoder.encode(key.findPath("key").asText(), "UTF-8"));
+						jsonObject.put("subcount", count);
+						subArray.put(jsonObject);		
 						totalCountSub = totalCountSub + count;
-					}
 					
 				}else{
 					Long count = key.findPath("doc_count").asLong();
 					JSONObject jsonObject = new JSONObject();
-					jsonObject.put("id", key.findPath("key").asText());
-					jsonObject.put("category", category);
+					jsonObject.put("id", URLEncoder.encode(key.findPath("key").asText(), "UTF-8"));
+					jsonObject.put("category", key.findPath("key").asText());
 					jsonObject.put("count", count);
 					catArray.put(jsonObject);
 					totalCountCat = totalCountCat + count; 
@@ -123,9 +124,9 @@ public class Application extends Controller {
 	}
 	
 	
-	public static Result getProductTypes(String searchText, String sortBy, String sortOrder, String filter, String id) throws JSONException {
+	public static Result getProductTypes(String searchText, String sortBy, String sortOrder, String categoryType, String filter) throws JSONException, UnsupportedEncodingException {
 
-		String jsonString = AppService.getProductTypes(searchText, sortBy, sortOrder, filter, id);
+		String jsonString = AppService.getProductTypes(searchText, sortBy, sortOrder, categoryType, filter);
 		JsonNode jsonNode = Json.parse(jsonString);
 
 		JsonNode aggrNode = jsonNode.findPath("aggregations").findPath("types").findPath("buckets");
@@ -134,19 +135,14 @@ public class Application extends Controller {
 		
 		if(aggrNode.isArray()){
 			for(JsonNode key : aggrNode){
-				String typeString = AppService.getProductType(key.findPath("key").asText());
 
-				JsonNode typeNode = Json.parse(typeString);
-				String type = typeNode.findPath("hits").findPath("hits").findPath("_source").findPath("name").asText();
-				if(StringUtils.isNotBlank(type)){
 					Long count = key.findPath("doc_count").asLong();
 					JSONObject jsonObject = new JSONObject();
-					jsonObject.put("id", key.findPath("key").asText());
-					jsonObject.put("type", type);
+					jsonObject.put("id", URLEncoder.encode(key.findPath("key").asText(), "UTF-8"));
+					jsonObject.put("type", key.findPath("key").asText());
 					jsonObject.put("count", count);
 					aggrArray.put(jsonObject);	
 					totalCount = totalCount + count;
-				}
 
 			}
 		}
@@ -158,30 +154,24 @@ public class Application extends Controller {
 		return ok(jsonObject.toString());
 	}
 	
-	public static Result getBrands(String searchText, String sortBy, String sortOrder, String filter, String id) throws JSONException {
+	public static Result getBrands(String searchText, String sortBy, String sortOrder, String categoryType, String filter) throws JSONException {
 
-		String jsonString = AppService.getBrands(searchText, sortBy, sortOrder, filter, id);
+		String jsonString = AppService.getBrands(searchText, sortBy, sortOrder, categoryType, filter);
 		JsonNode jsonNode = Json.parse(jsonString);
 
-		JsonNode aggrNode = jsonNode.findPath("aggregations").findPath("brands").findPath("buckets");
+		JsonNode aggrNode = jsonNode.findPath("buckets");
 		JSONArray aggrArray = new JSONArray();
 		long totalCount = 0;
 		if(aggrNode.isArray()){
 			for(JsonNode key : aggrNode){
-				String brandString = AppService.getBrand(key.findPath("key").asText());
-				JsonNode brandNode = Json.parse(brandString);
-				String brand = brandNode.findPath("hits").findPath("hits").findPath("_source").findPath("name").asText();
-
-				if(StringUtils.isNotBlank(brand)){
 
 				Long count = key.findPath("doc_count").asLong();
 				JSONObject jsonObject = new JSONObject();
 				jsonObject.put("id", key.findPath("key").asText());
-				jsonObject.put("brand", brand);
+				jsonObject.put("brand", key.findPath("key").asText());
 				jsonObject.put("count", count);
 				aggrArray.put(jsonObject);
 				totalCount = totalCount + count;
-				}
 			}
 		}
 		
@@ -193,10 +183,10 @@ public class Application extends Controller {
 
 	}
 	
-	public static Result getOnSaleNewImported(String searchText, String sortBy, String sortOrder, String filter, String id) throws JSONException {
+	public static Result getOnSaleNewImported(String searchText, String sortBy, String sortOrder, String categoryType, String filter) throws JSONException {
 
 		
-		JSONArray jsonArray = AppService.getOnSaleNewImported(searchText, sortBy, sortOrder, filter, id);
+		JSONArray jsonArray = AppService.getOnSaleNewImported(searchText, sortBy, sortOrder, categoryType, filter);
 		return ok(jsonArray.toString());
 
 	}

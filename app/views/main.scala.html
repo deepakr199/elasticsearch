@@ -52,7 +52,9 @@
 						<input type="text" name="searchText" autocomplete="off" placeholder="Search..." class="typeahead form-control" id="searchText" width="400px" >
 					<button class="button search" type="submit" onclick="callFunc($('#searchText').val())"><span class="glyphicon glyphicon-search"></span></button>
 					</div> -->
-					<input type="hidden" id="filter" value=""/>
+					<input type="hidden" id="brandType" value=""/>
+					<input type="hidden" id="brandTypeId" value=""/>
+					<input type="hidden" id="categoryType" value=""/>
 					<input type="hidden" id="id" value=""/>
 		<div class="">
         <form class="" role="search">
@@ -73,7 +75,7 @@
 	<section>
 		<div class="container">
 		<ol class="breadcrumb">
-  <li><a href="" onclick="breadcrumbcall('','')" >Home</a></li>
+  <li id="home"><a href="" onclick="breadcrumbcall('','')" >Home</a></li>
   
 
 </ol>
@@ -234,7 +236,7 @@
   	   });
 
     	
-    	   	var filter = {};
+    	   	var categoryType = {};
     	   	var id = {};
     	    var label = {};
     	    var searchText = {};
@@ -254,7 +256,7 @@
   		               $.each(data, function (i, item) {     
   		                   label[item.title] = item.display;
   		                   id[item.title] = item.id;
-  		                   filter[item.title] = item.type;
+  		                   categoryType[item.title] = item.type;
   		                   searchText[item.title] = item.searchText;
   		                   breadcrumb[item.title] = item.breadcrumb;
   		                   labels.push(item.title);
@@ -269,9 +271,9 @@
   	    	 		$('#categoryblock').show();
   					$('#subcategoryblock').show();
   					$('#productController').show();
-  	    	 		 if(filter[item] == 'categories'){
+  	    	 		 if(categoryType[item] == 'categories'){
   	    	 			 $('#searchText').val(searchText[item]);
-   						 angular.element('#categoryController').scope().getByCategory(id[item], filter[item], breadcrumb[item]);
+   						 angular.element('#categoryController').scope().getByCategory(id[item], categoryType[item], breadcrumb[item]);
   	    	 		 }else{
   	    	 			$('#searchText').val(searchText[item]);
   	  				 	callFunc(searchText[item]);
@@ -293,36 +295,48 @@
 			angular.element('#itemController').scope().myFunction(searchText);
        }
        
-       function filter(filter){
-			angular.element('#itemController').scope().filter(filter);
+       function sorter(sorter){
+			angular.element('#itemController').scope().sorter(sorter);
        }
        
-       function breadcrumbcall(id,filter){
+       function filter(){
+			angular.element('#itemController').scope().filter();
+      }
+       
+       function breadcrumbcall(id,categoryType){
     	   
-    	    if(filter == ''){
+    	    if(categoryType == ''){
     	    	$('ol.breadcrumb li:not(:first)').remove();
 				$('#categoryblock').show();
 				$('#subcategoryblock').show();
 				$('#productController').show();
-    	    }else if(filter == 'categories'){
-				var html = "<li>" + $('ol.breadcrumb li').slice(0).html() + "</li>"+"<li>" + $('ol.breadcrumb li').slice(1).html() + "</li>";
+    	    }else if(categoryType == 'categories.category_name.raw_category_name'){
+				var html = "<li id='home'>" + $('ol.breadcrumb li#home').html() + "</li>"+"<li id='category'>" + $('ol.breadcrumb li#category').html() + "</li>";
 				$('ol.breadcrumb').html(html);
 				$('#subcategoryblock').show();
 				$('#productController').show();
 				$('input#searchText').val("");
 				
-			}else if(filter == 'subcategories'){
-				var html = "<li>" + $('ol.breadcrumb li').slice(0).html() + "</li>"+"<li>" + $('ol.breadcrumb li').slice(1).html() + "</li>"+"<li>" + $('ol.breadcrumb li').slice(2).html() + "</li>";
+			}else if(categoryType == 'subcategories'){
+				var categoryhtml = $('ol.breadcrumb li#category').html();
+				if (typeof categoryhtml === "undefined") {
+					categoryhtml = "";
+				}else{
+					categoryhtml = "<li id='category'>" + categoryhtml + "</li>";
+				}
+				var html = "<li id='home'>" + $('ol.breadcrumb li#home').html() + "</li>"+categoryhtml+"<li id='subcategory'>" + $('ol.breadcrumb li#subcategory').html() + "</li>";
 				$('ol.breadcrumb').html(html);
-				filter = "categories";
+				categoryType = "categories.category_name.raw_category_name";
 				$('#productController').show();
 				$('input#searchText').val("");
 
     	    }
-			$('#filter').val(filter);
+			$('#brandType').val("");
+		    $('#brandTypeId').val("");
+			$('#categoryType').val(categoryType);
 		    $('#id').val(id);
 			$('input#searchText').val("");
-			angular.element('#itemController').scope().itemFilter("",filter,id);
+			angular.element('#itemController').scope().itemFilter("",categoryType,id);
        }
 
        </script>
