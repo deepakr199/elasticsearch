@@ -82,7 +82,7 @@ public class AppService {
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -165,7 +165,7 @@ public class AppService {
 
 			jsonArray = getCounts(isNewResponseString, isImportedResponseString, onSaleResponseString);
 
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -176,7 +176,6 @@ public class AppService {
 			throws JSONException {
 
 		JsonNode isNewNode = Json.parse(isNewResponseString).get("aggregations").get("isnew").get("buckets");
-		;
 		JsonNode isImportedNode = Json.parse(isImportedResponseString).get("aggregations").get("imported").get("buckets");
 		JsonNode OnSaleNode = Json.parse(onSaleResponseString).get("aggregations").get("onsale").get("buckets");
 
@@ -291,7 +290,7 @@ public class AppService {
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -343,7 +342,7 @@ public class AppService {
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -394,7 +393,7 @@ public class AppService {
 			response = client.execute(request);
 			HttpEntity entity = response.getEntity();
 			responseString = EntityUtils.toString(entity, "UTF-8");
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -420,7 +419,7 @@ public class AppService {
 
 			JsonNode categoryNode = Json.parse(responseString);
 			category = categoryNode.findPath("hits").findPath("hits").findPath("_source").findPath("title").asText();
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -466,7 +465,7 @@ public class AppService {
 				}
 			}
 
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -597,7 +596,7 @@ public class AppService {
 					jsonArray.put(jsonObject);
 				}
 			}
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -678,7 +677,7 @@ public class AppService {
 			keywords = new ArrayList<String>(temp);
 			keywords.remove("and");
 			keywords.remove("The");
-		} catch (ParseException | IOException e) {
+		} catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
@@ -707,7 +706,7 @@ public class AppService {
 		response = client.execute(request);
 		HttpEntity entity = response.getEntity();
 		responseString = EntityUtils.toString(entity, "UTF-8");
-		}catch (ParseException | IOException e) {
+		}catch (IOException e) {
 			Logger.error("IOException/ParseException - " + e.getMessage());
 			e.printStackTrace();
 		}
