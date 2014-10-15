@@ -267,7 +267,7 @@
   	    	 		$('#categoryblock').show();
   					$('#subcategoryblock').show();
   					$('#productController').show();
-  	    	 		 if(categoryType[item] == 'categories'){
+  	    	 		 if(categoryType[item] == 'categories.category_name.raw_category_name'){
   	    	 			 $('#searchText').val(searchText[item]);
    						 angular.element('#categoryController').scope().getByCategory(id[item], categoryType[item], breadcrumb[item]);
   	    	 		 }else{

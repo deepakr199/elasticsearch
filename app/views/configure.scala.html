@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+
+<html ng-app="configureApp">
+    <head>
+        <title>E-Shop</title>
+<link rel="stylesheet" media="screen" href="@routes.Assets.at("bootstrap/css/bootstrap.css")" />
+<link rel="stylesheet" media="screen" href="@routes.Assets.at("bootstrap/font-awesome-4.1.0/css/font-awesome.min.css")" />
+<link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/main.css")" />
+<link rel="stylesheet" media="screen" href="@routes.Assets.at("stylesheets/responsive.css")" />
+
+<script src="@routes.Assets.at("javascripts/jquery.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("bootstrap/js/bootstrap.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("bootstrap/js/bootstrap-typeahead.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("angularjs/angular.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("angularjs/angular-route.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("angularjs/angular-resource.min.js")" type="text/javascript"></script>
+<script src="@routes.Assets.at("javascripts/bootpag.js")" type="text/javascript"></script>
+<!-- <script src="http://angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.3.0.min.js" type="text/javascript"></script> -->
+
+
+<script src="@routes.Assets.at("javascripts/routes.js")" type="text/javascript"></script>
+    </head>
+    <body id="configureController" ng-controller="configureController">
+    
+    
+	<header id="header" ><!--header-->
+		<div class="header_top"><!--header_top-->
+			<div class="container">
+				<div class="row">
+
+				</div>
+			</div>
+		</div><!--/header_top-->
+		
+		<div class="header-middle"><!--header-middle-->
+			<div class="container">
+				<div class="row">
+
+				</div>
+			</div>
+		</div><!--/header-middle-->
+	
+		<div class="header-bottom"><!--header-bottom-->
+			<div class="container">
+				<div class="row">
+	
+				</div>
+				</div>
+			</div>
+	</header>
+	
+	<section>
+		<div class="container">
+   	
+		<div style="float:left;">Category</div>
+   <div class="col-sm-3 pull-left">						
+		  <select class="categoryfirst" >
+		  	<option ng-repeat="category in categories" value="{{category.category}}">{{category.category}}</option>
+		  </select>
+   </div>
+   <div class="col-sm-1 pull-left">						
+		  <select class="conditionselector" >
+		  	<option value="AND">AND</option>
+		    <option value="OR">OR</option>
+		  </select>
+  </div>
+  <div style="float:left;">Category</div>
+  <div class="col-sm-3 pull-left">						
+		  <select class="categorysecond" >
+		  	<option ng-repeat="category in categories" value="{{category.category}}">{{category.category}}</option>
+		  </select>
+  </div>
+  
+<div class="input-group">
+<input id="keyword" class="form-control" type="text" placeholder="Add a keyword" autocomplete="off" name="keyword">
+<div class="input-group-btn">
+<button class="btn btn-default" ng-click="addKeyword()" type="button">
+<i class="glyphicon glyphicon-check"></i>
+</button>
+</div>
+</div>
+</div>
+	</section>
+	<header id="header" ><!--header-->
+		<div class="header_top"><!--header_top-->
+			<div class="container">
+				<div class="row">
+
+				</div>
+			</div>
+		</div><!--/header_top-->
+		
+		<div class="header-middle"><!--header-middle-->
+			<div class="container">
+				<div class="row">
+
+				</div>
+			</div>
+		</div><!--/header-middle-->
+	
+		<div class="header-bottom"><!--header-bottom-->
+			<div class="container">
+				<div class="row">
+	
+				</div>
+				</div>
+			</div>
+	</header>
+       
+       <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Keyword</th>
+        <th>Category</th>
+        <th>Condition</th>
+        <th>Category</th>
+		<th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <tr id="{{keyword._id}}" ng-repeat="keyword in keywords">
+        <td>{{keyword._source.keyword}}</td>
+        <td>{{keyword._source.categoryFirst}}</td>
+        <td>{{keyword._source.condition}}</td>
+        <td>{{keyword._source.categorySecond}}</td>
+        <td><button class="btn btn-default" ng-click="deleteKeyword(keyword._id)" type="button"><i class="glyphicon glyphicon-remove"></i></button></td>
+      </tr>
+  
+    </tbody>
+   </table>   
+       
+    </body>
+</html>

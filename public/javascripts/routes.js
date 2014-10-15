@@ -432,3 +432,59 @@ shopApp.config(function($routeProvider,$locationProvider) {
 				});
 			});
 
+var configureApp = angular.module('configureApp', ['ngResource','ngRoute']);
+configureApp.controller(
+		'configureController',
+		function($scope, $http, $location) {
+			
+//			$scope.getByCategory = function(id, categoryType, category) {
+//				var html = "<li id='home'>" + $('ol.breadcrumb li').html() + "</li>";
+//				var breadcrumb =  "<li id='category'><a href=\"javascript:breadcrumbcall('"+encodeURIComponent(id)+"','"+categoryType+"')\">"+category+"</a></li>";
+//				$('ol.breadcrumb').html(html+breadcrumb);
+//				
+//				var searchText = $('#searchText').val();
+//				$('#categoryType').val(categoryType);
+//				$('#id').val(id);
+//				$('#categoryblock').hide();
+//				angular.element('#itemController').scope().itemFilter(searchText, categoryType, id);
+//				
+//			};
+			
+			$scope.getCustomKeywords = function() {
+				$http.get("/configure/getCustomKeywords").
+       	 			success(function(data, status, headers, config) {
+       	 				$scope.keywords = data;
+	             }).error(function(data, status, headers, config) {
+	             });
+				};
+			
+			$scope.addKeyword = function(keyword) {
+				$http.get("/configure/addKeyword?categoryFirst="+$('.categoryfirst').val()+"&categorySecond="+$('.categorysecond').val()+"&condition="+$('.conditionselector').val()+"&keyword="+$('#keyword').val()).
+       	 			success(function(data, status, headers, config) {
+	             }).error(function(data, status, headers, config) {
+	             });
+				window.location.reload();
+				};
+				
+			$scope.deleteKeyword = function(id) {
+				$http.get("/configure/deleteKeyword?id="+id).
+       	 			success(function(data, status, headers, config) {
+	             }).error(function(data, status, headers, config) {
+	             });
+				window.location.reload();
+				};
+			
+			$scope.getCategories = function() {
+				$http.get("/shop/categories").
+       	 			success(function(data, status, headers, config) {
+       	 		$scope.categories = data.mainObject[0];
+
+	             }).error(function(data, status, headers, config) {
+	             });
+				};
+			
+			angular.element('#configureController').scope().getCategories();
+			angular.element('#configureController').scope().getCustomKeywords();
+
+
+		}); 

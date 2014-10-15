@@ -185,15 +185,32 @@ public class Application extends Controller {
 	
 	public static Result getOnSaleNewImported(String searchText, String sortBy, String sortOrder, String categoryType, String filter) throws JSONException {
 
-		
 		JSONArray jsonArray = AppService.getOnSaleNewImported(searchText, sortBy, sortOrder, categoryType, filter);
 		return ok(jsonArray.toString());
 
 	}
-
-	public static Result elasticTest() throws JSONException {
-
-		JSONArray jsonArray = AppService.getLookup("s");
-		return ok(jsonArray.toString());
+	
+	public static Result configure() throws JSONException {
+		return ok(views.html.configure.render());
+	}
+	
+	public static Result addKeyword(String categoryFirst, String categorySecond, String condition, String keyword) throws JSONException {
+		AppService.addKeyword(categoryFirst, categorySecond, condition, keyword);
+		return ok();
+	}
+	
+	public static Result updateKeyword(String categoryFirst, String categorySecond, String condition, String id) throws JSONException {
+		AppService.updateKeyword(categoryFirst, categorySecond, condition, id);
+		return ok();
+	}
+	
+	public static Result deleteKeyword(String id) throws JSONException {
+		AppService.deleteKeyword(id);
+		return ok();
+	}
+	
+	public static Result getCustomKeywords() throws JSONException {
+		JsonNode jsonNode = AppService.getCustomKeywords();
+		return ok(jsonNode.toString());
 	}
 }

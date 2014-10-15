@@ -12,10 +12,11 @@ GET     /shop/categories            controllers.Application.getCategories(search
 GET     /shop/producttypes          controllers.Application.getProductTypes(searchText ?= "", sortBy ?= "inventory.stock_status", sortOrder ?= "desc", categoryType ?="", filter ?="")
 GET     /shop/newOnSaleImported     controllers.Application.getOnSaleNewImported(searchText ?= "", sortBy ?= "inventory.stock_status", sortOrder ?= "desc", categoryType ?="", filter ?="")
 
-GET     /elasticTest                controllers.Application.elasticTest()
-
-
-
+GET     /configure                  controllers.Application.configure()
+GET     /configure/getCustomKeywords  controllers.Application.getCustomKeywords()
+GET     /configure/addKeyword       controllers.Application.addKeyword(categoryFirst: String, categorySecond: String, condition: String, keyword: String)
+GET     /configure/updateKeyword    controllers.Application.updateKeyword(categoryFirst: String, categorySecond: String, condition: String, id: String)
+GET     /configure/deleteKeyword    controllers.Application.deleteKeyword(id: String)
 
 
 # Map static resources from the /public folder to the /assets URL path

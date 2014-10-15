@@ -12,6 +12,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -477,7 +478,7 @@ public class AppService {
 		JSONArray jsonArray = new JSONArray();
 
 		List<String> keywords = getKeywords(searchText, false);
-		if (keywords.isEmpty()) {
+/*		if (keywords.isEmpty()) {
 			keywords = getKeywords(searchText, true);
 			Integer count = 0;
 			for (String keyword : keywords) {
@@ -491,7 +492,7 @@ public class AppService {
 				jsonArray.put(jsonObject);
 				count = count + 1;
 			}
-		} else {
+		} else {*/
 			Integer count = 0;
 			for (String keyword : keywords) {
 				JSONObject jsonObject = new JSONObject();
@@ -504,13 +505,13 @@ public class AppService {
 				jsonArray.put(jsonObject);
 				count = count + 1;
 			}
-		}
+	//	}
 		JSONArray jsonArrayCat = getCategories(keywords);
 		JSONArray jsonArrayProd = getProducts(searchText);
 		for (int i = 0; i < jsonArrayCat.length(); i++) {
 			JSONObject jsonObject = new JSONObject();
 			JSONObject object = jsonArrayCat.getJSONObject(i);
-			jsonObject.put("type", "categories");
+			jsonObject.put("type", "categories.category_name.raw_category_name");
 			jsonObject.put("display", object.get("keyword") + " in <b style=\"color:#694F4F\">" + object.get("category") + "</b>");
 			jsonObject.put("id", object.get("categoryid"));
 			jsonObject.put("title", searchText + " in <b>" + object.get("category") + "</b> " + object.get("keyword"));
@@ -647,8 +648,8 @@ public class AppService {
 		List<String> keywords = new ArrayList<String>();
 		Set<String> temp = null;
 
-		String query = "{\"fields\" : [\"title\"], \"query\": {\"bool\": {\"must\":[{ \"match\": { \"details.status\":  \"1\" }},"+
-				"{ \"prefix\": { \"title\": \""+searchText.toLowerCase()+"\"   }}]}}," + "\"highlight\": {\"fields\": {\"title\": {}}}}";
+		String query = "{ \"query\": {\"multi_match\": {\"query\":\""+searchText.toLowerCase()+"\", \"fields\": [\"title\",\"keyword\"], \"type\":\"phrase_prefix\" }},"+
+				"\"highlight\":{ \"fields\": {\"title\": {},\"keyword\":{}}}}";
 
 		if (empty) {
 			query = "{\"query\": {\"match\": {\"title\": {\"query\": \"" + searchText
@@ -656,7 +657,7 @@ public class AppService {
 		}
 		Logger.info("KEYWORD "+query);
 		try {
-			request = new HttpPost("http://localhost:9200/prodcatalogidx/_search");
+			request = new HttpPost("http://localhost:9200/prodcatalogidx,keywordidx/_search");
 			StringEntity params = new StringEntity(query);
 			request.addHeader("content-type", "application/x-www-form-urlencoded");
 			request.setEntity(params);
@@ -669,8 +670,15 @@ public class AppService {
 
 			if (keywordNode.isArray()) {
 				for (JsonNode source : keywordNode) {
-					String[] words = StringUtils.substringsBetween(source.get("highlight").get("title").toString(), "<em>", "</em>");
-					keywords.addAll(Arrays.asList(words));
+					if(source.get("highlight").get("keyword") != null){
+						String[] words = StringUtils.substringsBetween(source.get("highlight").get("keyword").toString(), "<em>", "</em>");
+						keywords.addAll(Arrays.asList(words));	
+					}else{
+						if(source.get("_source").get("details").get("status").toString().equals("1")){
+							String[] words = StringUtils.substringsBetween(source.get("highlight").get("title").toString(), "<em>", "</em>");
+							keywords.addAll(Arrays.asList(words));
+						}
+					}
 				}
 			}
 			temp = new LinkedHashSet<String>(keywords);
@@ -720,6 +728,77 @@ public class AppService {
 		}
 		
 		return categoryList;
+	}
+
+	public static void addKeyword(String categoryFirst, String categorySecond, String condition, String keyword) {
+		@SuppressWarnings("resource")
+		HttpClient client = new DefaultHttpClient();
+		HttpPost request = null;
+		try{
+		String query = "{\"keyword\":\""+keyword+"\",\"categoryFirst\": \""+categoryFirst+"\", \"condition\": \""+condition+"\", \"categorySecond\":\""+categorySecond+"\"}";
+		request = new HttpPost("http://localhost:9200/keywordidx/page");
+		StringEntity params = new StringEntity(query);
+		request.addHeader("content-type", "application/x-www-form-urlencoded");
+		request.setEntity(params);
+		client.execute(request);
+		}catch (IOException e) {
+			Logger.error("IOException/ParseException - " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	public static void updateKeyword(String categoryFirst, String categorySecond, String condition, String id) {
+		
+		@SuppressWarnings("resource")
+		HttpClient client = new DefaultHttpClient();
+		HttpPost request = null;
+		try{
+		String query = "{\"query\":\"category:"+categoryFirst+" "+condition+" category:"+categorySecond+"\"}";
+		request = new HttpPost("http://localhost:9200/keywordidx/page/"+id);
+		StringEntity params = new StringEntity(query);
+		request.addHeader("content-type", "application/x-www-form-urlencoded");
+		request.setEntity(params);
+		client.execute(request);
+		}catch (IOException e) {
+			Logger.error("IOException/ParseException - " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+
+	public static void deleteKeyword(String id) {
+		
+		@SuppressWarnings("resource")
+		HttpClient client = new DefaultHttpClient();
+		HttpDelete request = null;
+		try{
+		request = new HttpDelete("http://localhost:9200/keywordidx/page/"+id);
+		request.addHeader("content-type", "application/x-www-form-urlencoded");
+		client.execute(request);
+		}catch (IOException e) {
+			Logger.error("IOException/ParseException - " + e.getMessage());
+			e.printStackTrace();
+		}
+	}
+	
+	public static JsonNode getCustomKeywords() {
+		
+		@SuppressWarnings("resource")
+		HttpClient client = new DefaultHttpClient();
+		HttpPost request = null;
+		HttpResponse response = null;
+		String responseString = null;
+		try{
+		request = new HttpPost("http://localhost:9200/keywordidx/_search");
+		request.addHeader("content-type", "application/x-www-form-urlencoded");
+		response = client.execute(request);
+		HttpEntity entity = response.getEntity();
+		responseString = EntityUtils.toString(entity, "UTF-8");
+		}catch (IOException e) {
+			Logger.error("IOException/ParseException - " + e.getMessage());
+			e.printStackTrace();
+		}
+		JsonNode jsonNode = Json.parse(responseString);
+		return jsonNode.get("hits").get("hits");
 	}
 
 }
