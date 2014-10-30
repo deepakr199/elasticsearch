@@ -15,7 +15,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 					$('#brandType').val("");
 				    $('#brandTypeId').val("");
 
-					$http.get("/shop/items?searchText="+searchText).
+					$http.get("/demo/shop/items?searchText="+searchText).
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
@@ -47,7 +47,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 					if($('#brandTypeId').val()){
 						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
 					}
-					$http.get("/shop/items?searchText="+searchText+"&sortBy="+queries[0]+"&sortOrder="+queries[1]+"&categoryType="+query+"&filter="+filters).
+					$http.get("/demo/shop/items?searchText="+searchText+"&sortBy="+queries[0]+"&sortOrder="+queries[1]+"&categoryType="+query+"&filter="+filters).
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
@@ -79,7 +79,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 					if($('#brandTypeId').val()){
 						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
 					}
-					$http.get("/shop/items?searchText="+searchText+"&sortBy="+queries[0]+"&sortOrder="+queries[1]+"&categoryType="+query+"&filter="+filters).
+					$http.get("/demo/shop/items?searchText="+searchText+"&sortBy="+queries[0]+"&sortOrder="+queries[1]+"&categoryType="+query+"&filter="+filters).
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
@@ -110,7 +110,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
 					}
 					
-					$http.get("/shop/items?searchText="+searchText+"&categoryType="+query+"&filter="+filters+"&sortBy="+queries[0]+"&sortOrder="+queries[1]).
+					$http.get("/demo/shop/items?searchText="+searchText+"&categoryType="+query+"&filter="+filters+"&sortBy="+queries[0]+"&sortOrder="+queries[1]).
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
@@ -137,7 +137,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 					if($('#brandTypeId').val()){
 						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
 					}
-					$http.get("/shop/newOnSaleImported?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
+					$http.get("/demo/shop/newOnSaleImported?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
 	    	 	success(function(data, status, headers, config) {
 	    	 		$scope.featuredI = data;
 		             }).error(function(data, status, headers, config) {
@@ -162,7 +162,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 						query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
 					}
 
-					$http.get("/shop/items?searchText="+searchText+"&categoryType="+query+"&filter="+filters+"&sortBy="+sortBy+"&sortOrder="+sortOrder+"&page="+from).
+					$http.get("/demo/shop/items?searchText="+searchText+"&categoryType="+query+"&filter="+filters+"&sortBy="+sortBy+"&sortOrder="+sortOrder+"&page="+from).
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
@@ -180,7 +180,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 					
 				};
 				
-				 $http.get("/shop/items").
+				 $http.get("/demo/shop/items").
              	 	success(function(data, status, headers, config) {
              	 		$scope.items = data.items;
              	 		$scope.totalPages = data.totalPages;
@@ -243,7 +243,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 				if($('#brandTypeId').val()){
 					query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
 				}
-				$http.get("/shop/categories?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
+				$http.get("/demo/shop/categories?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
        	 	success(function(data, status, headers, config) {
        	 		$scope.categories = data.mainObject[0];
        	 		$scope.subcategories = data.mainObject[1];
@@ -318,7 +318,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 						if($('#brandTypeId').val()){
 							query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
 						}
-						$http.get("/shop/brands?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
+						$http.get("/demo/shop/brands?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
 	             	 	success(function(data, status, headers, config) {
 	             	 		$scope.brands = data.brands;
 	               	 		$scope.totalBrands = data.totalBrands;
@@ -362,7 +362,7 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
 						if($('#brandTypeId').val()){
 							query = query + $('#brandType').val() + ":" + $('#brandTypeId').val(); 
 						}
-						$http.get("/shop/producttypes?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
+						$http.get("/demo/shop/producttypes?searchText="+searchText+"&categoryType="+query+"&filter="+filters).
 	             	 	success(function(data, status, headers, config) {
 	             	 		$scope.types = data.types;
 	               	 		$scope.totalTypes = data.totalTypes;
@@ -413,10 +413,10 @@ var shopApp = angular.module('shopApp', ['ngResource','ngRoute']);
  
 shopApp.config(function($routeProvider,$locationProvider) {
 	$locationProvider.html5Mode(true);
-				$routeProvider.when('/shop', {
-					templateUrl : '/assets/template/shop.html'
-				}).when('/shop/items', {
-					templateUrl : '/assets/template/shop.html'
+				$routeProvider.when('/demo/shop', {
+					templateUrl : '/demo/assets/template/shop.html'
+				}).when('/demo/shop/items', {
+					templateUrl : '/demo/assets/template/shop.html'
 				}).otherwise({
 //				}).when('/dashboard', {
 //					templateUrl : '/assets/template/ticket/dashboard.html',
@@ -428,7 +428,7 @@ shopApp.config(function($routeProvider,$locationProvider) {
 //					templateUrl : '/assets/template/ticket/edit.html',
 //					controller : 'editController'
 //				}).otherwise({
-					redirectTo : '/shop'	
+					redirectTo : '/demo/shop'	
 				});
 			});
 
@@ -451,7 +451,7 @@ configureApp.controller(
 //			};
 			
 			$scope.getCustomKeywords = function() {
-				$http.get("/configure/getCustomKeywords").
+				$http.get("/demo/configure/getCustomKeywords").
        	 			success(function(data, status, headers, config) {
        	 				$scope.keywords = data;
 	             }).error(function(data, status, headers, config) {
@@ -459,7 +459,7 @@ configureApp.controller(
 				};
 			
 			$scope.addKeyword = function(keyword) {
-				$http.get("/configure/addKeyword?categoryFirst="+$('.categoryfirst').val()+"&categorySecond="+$('.categorysecond').val()+"&condition="+$('.conditionselector').val()+"&keyword="+$('#keyword').val()).
+				$http.get("/demo/configure/addKeyword?categoryFirst="+$('.categoryfirst').val()+"&categorySecond="+$('.categorysecond').val()+"&condition="+$('.conditionselector').val()+"&keyword="+$('#keyword').val()).
        	 			success(function(data, status, headers, config) {
 	             }).error(function(data, status, headers, config) {
 	             });
@@ -467,7 +467,7 @@ configureApp.controller(
 				};
 				
 			$scope.deleteKeyword = function(id) {
-				$http.get("/configure/deleteKeyword?id="+id).
+				$http.get("/demo/configure/deleteKeyword?id="+id).
        	 			success(function(data, status, headers, config) {
 	             }).error(function(data, status, headers, config) {
 	             });
@@ -475,7 +475,7 @@ configureApp.controller(
 				};
 			
 			$scope.getCategories = function() {
-				$http.get("/shop/categories").
+				$http.get("/demo/shop/categories").
        	 			success(function(data, status, headers, config) {
        	 		$scope.categories = data.mainObject[0];
 

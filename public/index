@@ -97,3 +97,15 @@ curl -XPUT "localhost:9200/_river/catalogidx/_meta" -d '
     "type": "page"
   }
 }'
+
+
+curl -XPUT "localhost:9200/keywordidx" -d '
+    {
+    "mappings":{
+            "page" : {
+                "properties" : {
+    "keyword": {"type": "string", "index": "not_analyzed"}
+                }
+            }
+        }
+    }'
